@@ -373,7 +373,7 @@ Harder datasets (where shifts are larger) are likely to benefit from a smaller $
 
 A natural question is whether simpler shrinkage estimators could achieve similar gains as the DBB estimator.
 To address this, we additionally derive and evaluate the per-prompt exponential moving average (EMA) and Laplace smoothing (Lap) estimators of the success probability $p_\tau$.
-For a direct comparison against DBB estimator on a comparable axis, we parameterize the shrinkage strength of each estimator by a single hyperparameter $\lambda$.
+For a direct comparison against the DBB estimator on a comparable axis, we parameterize the shrinkage strength of each estimator by a single hyperparameter $\lambda$.
 
 \paragraph{Per-prompt EMA estimator.}
 We define the per-prompt EMA recursively as
@@ -416,16 +416,16 @@ whose conditional MSE is
 
 \paragraph{Empirical comparison.}
 Following the same protocol of Section~\ref{sec:mse_analysis}, we sweep $\lambda$ for each estimator.
-As shown in Figure~\ref{fig:ema_laplace}, DBB estimator achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
-EMA attains its best MSE of $0.0086$ at $\lambda=0.3$, which is $2.67\%$ higher than that of DBB estimator; however, the MSE of EMA rises rapidly as $\lambda$ grows, and the range of $\lambda$ over which EMA outperforms the point estimator is relatively narrow.
-Similarly, Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$, $21.71\%$ higher than that of DBB estimator, and likewise outperforms the point estimator only within a narrow $\lambda$ range.
-Overall, DBB estimator is the most favorable option among these light-weight shrinkage estimators.
+As shown in Figure~\ref{fig:ema_laplace}, the DBB estimator achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
+EMA attains its best MSE of $0.0086$ at $\lambda=0.3$, which is $2.67\%$ higher than that of the DBB estimator; however, the MSE of EMA rises rapidly as $\lambda$ grows, and the range of $\lambda$ over which EMA outperforms the point estimator is relatively narrow.
+Similarly, Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$, $21.71\%$ higher than that of the DBB estimator, and likewise outperforms the point estimator only within a narrow $\lambda$ range.
+Overall, the DBB estimator is the most favorable option among these light-weight shrinkage estimators.
 It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on the point estimator.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.85\columnwidth]{figures/figure6_ema_laplace.pdf}
-    \caption{MSE versus $\lambda$ for per-prompt exponential moving average (EMA), Laplace smoothing (Laplace), point estimator (GRPO), and DBB estimator (GRPO-DBB). DBB estimator attains the lowest minimum MSE at $\lambda=0.4$ and improves on the point estimator over a broader range of $\lambda$ than EMA or Laplace.}
+    \caption{MSE versus $\lambda$ for per-prompt exponential moving average (EMA), Laplace smoothing (Laplace), point estimator (GRPO), and DBB estimator (GRPO-DBB). The DBB estimator attains the lowest minimum MSE at $\lambda=0.4$ and improves on the point estimator over a broader range of $\lambda$ than EMA or Laplace.}
     \label{fig:ema_laplace}
 \end{figure}
 \FloatBarrier
@@ -462,9 +462,9 @@ Treating $(\hat{\alpha}_{\mathrm{EB}}(s),\hat{\beta}_{\mathrm{EB}}(s))$ as deter
 \end{equation}
 
 EB has the advantage of not requiring manual hyperparameter tuning, since the shared prior is estimated directly from the population of per-prompt posteriors.
-However, its minimum achievable MSE is higher than that of DBB estimator (Figure~\ref{fig:emp_bayes}).
+However, its minimum achievable MSE is higher than that of the DBB estimator (Figure~\ref{fig:emp_bayes}).
 This suggests a trade-off between robustness (i.e., reduced dependence on $\lambda$) and optimal performance.
-Combining a hierarchical prior with the discounted update of DBB estimator is a natural direction for future work.
+Combining a hierarchical prior with the discounted update of the DBB estimator is a natural direction for future work.
 
 \begin{figure}[!htbp]
     \centering

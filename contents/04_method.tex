@@ -2,7 +2,7 @@
 
 Many group-based RLVR methods \cite{shao2024deepseekmath, liu2025understandingr1zeroliketrainingcritical, xie2025unlocking, le2025promptleftbehindexploiting} primarily focus on the design of advantage estimators, while paying comparatively little attention to the more fundamental problem of reward estimation that underlies advantage computation. In practice, computational and memory constraints limit the number of sampled responses per prompt, making accurate reward estimation inherently difficult.
 
-In contrast, we introduce a new perspective that reformulates RLVR through the lens of statistical estimation (\cref{subsec:problem_formulation}). Specifically, we view the reward not as a deterministic signal, but as a distribution induced by the policy, and frame advantage computation as a problem of estimating this distribution from finite samples. Building on this reformulation, we propose \textbf{D}iscounted \textbf{B}eta--\textbf{B}ernoulli (\textbf{DBB}) reward estimation for RLVR, which estimates the non-stationary reward distribution by leveraging historical rewards (\cref{subsec:grpohistbeta}). Despite introducing bias, DBB reduces estimator variance and achieves lower MSE. Moreover, it fundamentally prevents variance collapse and preserves informative training signals (\cref{subsec:comparison}).
+In contrast, we introduce a new perspective that reformulates RLVR through the lens of statistical estimation (\cref{subsec:problem_formulation}). Specifically, we view the reward not as a deterministic signal, but as a distribution induced by the policy, and frame advantage computation as a problem of estimating this distribution from finite samples. Building on this reformulation, we propose \textbf{D}iscounted \textbf{B}eta--\textbf{B}ernoulli (\textbf{DBB}) reward estimation for RLVR, which estimates the non-stationary reward distribution by leveraging historical rewards (\cref{subsec:grpohistbeta}). Despite introducing bias, DBB reduces estimator variance and, under mild non-stationarity, achieves lower MSE than point estimation. Moreover, it fundamentally prevents variance collapse and preserves informative training signals (\cref{subsec:comparison}).
 
 
 \subsection{Reward Estimation as Distributional Inference}
@@ -119,12 +119,12 @@ These show that the DBB estimator introduces bias through shrinkage toward the h
 % Algorithm~\ref{alg:grpohistbeta} summarizes the overall training procedure of the group-based RLVR algorithm with DBB, and Table~\ref{tab:estimator_comparison} summarizes and compares the statistics of point estimation and ours.
 
 
-\subsection{Mean Squared Error of the DBB estimator}
+\subsection{Mean Squared Error of the DBB Estimator}
 \label{subsec:comparison}
 
 % 실제로 우리 DBB estimator 가 reward distribution 예측에 얼마나 효과적인지를 분석하기 위해 MSE 구해봄. underlying reward probability 에 어떻게 영향을 받는지 확인하기 위해서 앞선 분석들에서 alpha, beta 로 표현된 식을 p1~p_tau 로 구성된 수식으로 재전개해볼 것.
 
-To assess the effectiveness of our DBB estimator in predicting the reward distribution, we compute its mean squared error (MSE). To make the estimator's dependence on the underlying reward probabilities $\{p_1, \ldots, p_\tau\}$, we re-express its expectation and variance, originally formulated in terms of the posterior parameters $(\alpha_{\tau-1}, \beta_{\tau-1})$.
+To assess the effectiveness of our DBB estimator in predicting the reward distribution, we compute its mean squared error (MSE). To make the estimator's dependence on the underlying reward probabilities $\{p_1, \ldots, p_\tau\}$ explicit, we re-express its expectation and variance, originally formulated in terms of the posterior parameters $(\alpha_{\tau-1}, \beta_{\tau-1})$.
 
 Based on the update defined in \cref{eq:param_update_dbb}, posterior parameters can be expressed as
 \[

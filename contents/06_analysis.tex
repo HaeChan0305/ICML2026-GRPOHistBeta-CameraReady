@@ -21,7 +21,7 @@ Finally, we demonstrate that DBB can be readily integrated into alternative adva
 \end{figure*}
 
 Figure~\ref{fig:train_dynamics} illustrates the validation accuracy and training dynamics of GRPO-DBB and GRPO during training.
-For GRPO-DBB, the discounting factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base and $0.75$ for Qwen3-8B-Base.
+For GRPO-DBB, the discount factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base and $0.75$ for Qwen3-8B-Base.
 For both model scales, GRPO-DBB achieves higher validation accuracy and training rewards than GRPO throughout most of the training process.
 
 Examining the response length over the course of training, we observe that GRPO-DBB consistently produces longer responses than GRPO throughout training.
@@ -53,7 +53,7 @@ Conversely, when the learning dynamics are slower and more stationary, a larger 
 This behavior can be interpreted in conjunction with the training reward dynamics shown in Figure~\ref{fig:train_dynamics}.
 For Qwen3-1.7B-Base, the training reward exhibits sustained changes throughout the training process, indicating continuously evolving estimates of $p_{\tau}$.
 In contrast, for Qwen3-8B-Base, the training reward increases rapidly during the very early stage of training (within approximately the first 0.3 epoch) and remains relatively stationary for the remainder of training.
-As a result, a smaller discounting factor ($\lambda = 0.5$) is more effective for Qwen3-1.7B-Base, while a larger value ($\lambda = 0.75$) better matches the slower and more gradual learning dynamics of Qwen3-8B-Base.
+As a result, a smaller discount factor ($\lambda = 0.5$) is more effective for Qwen3-1.7B-Base, while a larger value ($\lambda = 0.75$) better matches the slower and more gradual learning dynamics of Qwen3-8B-Base.
 More generally, this behavior reflects the bias--variance trade-off of the DBB estimator.
 As $\lambda$ increases, variance decreases but bias grows when the reward distribution shifts substantially between epochs.
 Weaker models or more challenging datasets tend to incur larger such shifts, making a smaller $\lambda$ preferable.
@@ -64,7 +64,6 @@ Based on this observation, we cautiously suggest a starting point for larger mod
 For $30$B$+$ models trained on datasets of similar difficulty to DAPO-Math-17k, $\lambda$ close to $1$ may be a reasonable starting point, while harder datasets are likely to benefit from a smaller $\lambda$.
 
 
-\label{sec:mse_analysis}
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/mse_combined.pdf}
@@ -73,6 +72,7 @@ For $30$B$+$ models trained on datasets of similar difficulty to DAPO-Math-17k, 
 \end{figure}
 
 \subsection{Analysis of MSE}
+\label{sec:mse_analysis}
 \label{subsec:anal_mse}
 
 To evaluate how accurately the point estimator $\hat{p}_{\tau}^{\mathrm{pt}}$ and the DBB estimator $\hat{p}_{\tau}^{\mathrm{dbb}}$ approximate the Bernoulli parameter $p_{\tau}$ during training, we conduct an empirical estimation error analysis.
@@ -113,7 +113,7 @@ X_{\tau,i} = r(o_{\tau,i}, q).
 \)
 Since training is conducted for a total of four epochs, this procedure yields a sequence of reference values $\{\tilde{p}_{\tau}(q)\}_{\tau=1}^{4}$ for each query.
 
-Using $\tilde{p}_{\tau}(q)$ as a surrogate for the true Bernoulli parameter, we measure the average MSE of the DBB estimator and the point estimator following Equation~\eqref{eq:hb_mse_pseq} and ~\eqref{eq:pt_mse_pseq}, respectively. 
+Using $\tilde{p}_{\tau}(q)$ as a surrogate for the true Bernoulli parameter, we measure the average MSE of the DBB estimator and the point estimator following Equations~\eqref{eq:hb_mse_pseq} and~\eqref{eq:pt_mse_pseq}, respectively.
 
 
 \paragraph{Effect of $\lambda$ on MSE}
@@ -128,7 +128,7 @@ Taken together, the results indicate that more accurate reward distribution esti
 
 \paragraph{Effect of $N$ on MSE}
 We further examine how the MSE varies as the number of rollouts $N$ increases.
-Figure~\ref{tab:lambda}(b) reports the average MSE as a function of $N$ when $\lambda = 0.4$.
+Figure~\ref{fig:mse_lambda}(b) reports the average MSE as a function of $N$ when $\lambda = 0.4$.
 The results show that the DBB estimator consistently outperforms the point estimator for $N$ up to 16.
 This suggests that, in regimes where computational resource constraints necessitate small rollout budgets, the DBB estimator can serve as an effective alternative to point estimation.
 
