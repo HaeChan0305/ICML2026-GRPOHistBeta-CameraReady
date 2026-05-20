@@ -256,6 +256,13 @@ For statistical significance, we additionally perform four independent evaluatio
 \section{Isolating the Effect of the Clipping Range}
 \label{ap:clipping}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure4_clipping.pdf}
+    \caption{Training dynamics of Qwen3-1.7B-Base with GRPO and GRPO-DBB under clipping ranges $(0.2,0.28)$ and $(0.98,0.98)$. From left to right: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss. GRPO-DBB suffers excessive clipping under the standard range; once the range is widened, it recovers strong performance. GRPO under the wider range shows no improvement, confirming that the gains of GRPO-DBB are due to the DBB estimator rather than the clip range.}
+    \label{fig:clipping}
+\end{figure}
+
 We further investigate whether the performance gains of GRPO-DBB stem from the DBB estimator itself or from the wider clipping range $(0.98,0.98)$ used for it.
 To this end, we train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$.
 Figure~\ref{fig:clipping} compares four diagnostics across the four resulting runs: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
@@ -274,16 +281,18 @@ Critically, GRPO under the same wider $(0.98,0.98)$ range shows similar or even 
 This rules out the hypothesis that a wider clip range mechanically improves performance.
 Accordingly, in all main-table experiments we report each method with its own best clipping configuration.
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/figure4_clipping.pdf}
-    \caption{Training dynamics of Qwen3-1.7B-Base with GRPO and GRPO-DBB under clipping ranges $(0.2,0.28)$ and $(0.98,0.98)$. From left to right: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss. GRPO-DBB suffers excessive clipping under the standard range; once the range is widened, it recovers strong performance. GRPO under the wider range shows no improvement, confirming that the gains of GRPO-DBB are due to the DBB estimator rather than the clip range.}
-    \label{fig:clipping}
-\end{figure}
+
 
 
 \section{Sensitivity to the Prior Hyperparameters $(\alpha_0,\beta_0)$}
 \label{ap:prior_sensitivity}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
+    \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
+    \label{fig:prior_sensitivity}
+\end{figure}
 
 We additionally measure the MSE of the DBB estimator with respect to the prior hyperparameters $(\alpha_0,\beta_0)$ and the discount factor $\lambda$ under the same setup as Section~\ref{sec:mse_analysis}.
 
@@ -298,13 +307,6 @@ In the absence of prior knowledge about $p_\tau$, symmetric initialization avoid
 At the same time, it keeps the prior mass small relative to typical batch sizes.
 As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
 Overall, MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, but this sensitivity is not a practical concern as long as pathological prior choices are avoided.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
-    \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
-    \label{fig:prior_sensitivity}
-\end{figure}
 
 
 \section{Mean@8 and Best@8 Validation Curves}
