@@ -364,54 +364,61 @@ The reason is that their reward distribution shifts more rapidly during training
 We extrapolate this rule cautiously to larger models.
 For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
 Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
+
+
 \section{Comparison with Per-Prompt EMA and Laplace Smoothing}
 \label{ap:ema_laplace}
 
-A natural question is whether simpler shrinkage estimators could achieve similar gains as the DBB estimator. To address this, we additionally derive and evaluate the per-prompt exponential moving average (EMA) and per-prompt Laplace smoothing estimators of the success probability $p_\tau$.
+A natural question is whether simpler shrinkage estimators could achieve similar gains as the DBB estimator.
+To address this, we additionally derive and evaluate the per-prompt exponential moving average (EMA) and per-prompt Laplace smoothing (Lap) estimators of the success probability $p_\tau$.
+For a direct comparison against DBB on a comparable axis, we parameterize the shrinkage strength of each estimator by a single hyperparameter $\lambda$.
 
 \paragraph{Per-prompt EMA estimator.}
-Let $\hat{p}_\tau^{(\mathrm{EMA})}$ denote the EMA of the per-prompt empirical mean with decay rate $\lambda$:
+We define the per-prompt EMA recursively as
 \begin{equation}
-\hat{p}_\tau^{(\mathrm{EMA})}
-=
-\frac{\sum_{k=1}^{\tau}\lambda^{\tau-k}\,\hat{p}_k^{\mathrm{pt}}}{\sum_{k=1}^{\tau}\lambda^{\tau-k}},
+\hat{p}_\tau^{\,\mathrm{EMA}}
+= (1-\lambda)\,\frac{S_\tau}{N} + \lambda\,\hat{p}_{\tau-1}^{\,\mathrm{EMA}},
 \qquad
-\hat{p}_k^{\mathrm{pt}}=\frac{S_k}{N}.
+\hat{p}_1^{\,\mathrm{EMA}} = \frac{S_1}{N}.
 \end{equation}
-Conditional on the sequence $p_{1:\tau}$ and using $S_k\sim\mathrm{Binomial}(N,p_k)$, its conditional MSE is
+Unrolling the recursion gives $\hat{p}_\tau^{\,\mathrm{EMA}} = \sum_{k=1}^{\tau} w_k\,(S_k/N)$ with weights
 \begin{equation}
-\mathrm{MSE}\!\left(\hat{p}_\tau^{(\mathrm{EMA})}\mid p_{1:\tau}\right)
-=
-\Bigg(\sum_{k=1}^{\tau} \tilde{c}_k\,(p_k-p_\tau)\Bigg)^{2}
-+
-\sum_{k=1}^{\tau}\tilde{c}_k^{\,2}\,\frac{p_k(1-p_k)}{N},
+w_1 = \lambda^{\tau-1},
+\qquad
+w_k = (1-\lambda)\,\lambda^{\tau-k} \;\; (k \ge 2),
+\qquad
+\sum_{k=1}^{\tau} w_k = 1.
 \end{equation}
-where $\tilde{c}_k=\lambda^{\tau-k}/\sum_{j=1}^{\tau}\lambda^{\tau-j}$.
+Conditional on $p_{1:\tau}$ and using $S_k\sim\mathrm{Binomial}(N,p_k)$, its conditional MSE is
+\begin{equation}
+\mathrm{MSE}\!\left(\hat{p}_\tau^{\,\mathrm{EMA}}\mid p_{1:\tau}\right)
+=
+\Bigg(\sum_{k=1}^{\tau-1} w_k\,(p_k-p_\tau)\Bigg)^{2}
++
+\sum_{k=1}^{\tau} w_k^{\,2}\,\frac{p_k(1-p_k)}{N}.
+\end{equation}
 
 \paragraph{Per-prompt Laplace smoothing.}
-With a pseudocount $a$ split symmetrically across the two outcomes, the Laplace-smoothed estimator is
+We define the Laplace-smoothed estimator with pseudocount $\lambda$ (symmetric across the two outcomes) as
 \begin{equation}
-\hat{p}_\tau^{(\mathrm{Lap})}
+\hat{p}_\tau^{\,\mathrm{Lap}}
 =
-\frac{S_\tau + a}{N + 2a},
+\frac{S_\tau + \lambda}{N + 2\lambda},
 \end{equation}
-which has conditional MSE
+whose conditional MSE is
 \begin{equation}
-\mathrm{MSE}\!\left(\hat{p}_\tau^{(\mathrm{Lap})}\mid p_\tau\right)
+\mathrm{MSE}\!\left(\hat{p}_\tau^{\,\mathrm{Lap}}\mid p_\tau\right)
 =
-\Bigg(\frac{a\,(1-2p_\tau)}{N+2a}\Bigg)^{2}
-+
-\frac{N\,p_\tau(1-p_\tau)}{(N+2a)^2}.
+\frac{\lambda^{2} + (N - 4\lambda^{2})\,p_\tau(1-p_\tau)}{(N+2\lambda)^{2}}.
 \end{equation}
-We parameterize the pseudocount as $a=\lambda\cdot a_{\max}$ to keep a comparable $\lambda$ sweep range against EMA and DBB.
 
 \paragraph{Empirical comparison.}
 Following the protocol of Section~\ref{sec:mse_analysis} (Qwen3-1.7B-Base, 128-rollout reference), we sweep $\lambda$ for each estimator.
 As shown in Figure~\ref{fig:ema_laplace}, GRPO-DBB achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
-EMA attains its best MSE of $0.0086$ at $\lambda=0.3$ ($+2.67\%$ over DBB) and degrades rapidly as $\lambda$ grows, indicating high sensitivity to $\lambda$.
-Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$ ($+21.71\%$ over DBB) and also outperforms point estimation only within a narrow $\lambda$ range.
+EMA attains its best MSE of $0.0086$ at $\lambda=0.3$, which is $2.67\%$ higher than that of GRPO-DBB; however, the MSE of EMA rises rapidly as $\lambda$ grows, and the range of $\lambda$ over which EMA outperforms the point estimator is relatively narrow.
+Similarly, Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$, $21.71\%$ higher than that of GRPO-DBB, and likewise outperforms the point estimator only within a narrow $\lambda$ range.
 Overall, DBB is the most favorable option among these light-weight shrinkage estimators.
-It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on point estimation.
+It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on the point estimator.
 
 \begin{figure}[t]
     \centering
