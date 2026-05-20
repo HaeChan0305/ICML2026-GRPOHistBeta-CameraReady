@@ -240,6 +240,9 @@ For all baselines (GRPO, RePO, GRESO, DAPO, and Dr.GRPO), we use $(\epsilon_{\ma
 For GRPO-DBB and Dr.GRPO-DBB, we instead use a wider $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.98,0.98)$ to avoid over-clipping the larger advantages produced by the DBB estimator.
 A detailed analysis showing that this choice does not by itself explain the performance gains is provided in Appendix~\ref{ap:clipping}.
 
+For GRPO-DBB and Dr.GRPO-DBB, we initialize the Beta posterior with the symmetric uninformative prior $(\alpha_0,\beta_0)=(1,1)$, which avoids injecting bias toward either outcome while keeping the prior mass small relative to the on-policy batch.
+A detailed MSE sensitivity analysis over $(\alpha_0,\beta_0)$ and the corresponding $\lambda$ is provided in Appendix~\ref{ap:prior_sensitivity}.
+
 For GRESO, we follow the original implementation and use the reported best probabilistic-filtering thresholds; for DAPO we use the dynamic-sampling configuration recommended in the original paper, retaining the same total number of rollouts as the other methods.
 For RePO, which introduces additional hyperparameters and configuration options, we follow the optimal settings recommended in the original paper.
 Specifically, we set the number of replay samples to 8, use a replay cache size of 16, and adopt the reward-oriented replay strategy.
@@ -279,6 +282,31 @@ Accordingly, in all main-table experiments we report each method with its own be
 \end{figure}
 
 
+\section{Sensitivity to the Prior Hyperparameters $(\alpha_0,\beta_0)$}
+\label{ap:prior_sensitivity}
+
+We additionally measure the MSE of the DBB estimator with respect to the prior hyperparameters $(\alpha_0,\beta_0)$ and the discount factor $\lambda$ under the same setup as Section~\ref{sec:mse_analysis}.
+
+Figure~\ref{fig:prior_sensitivity}(a) shows a heatmap of $\min_\lambda \mathrm{MSE}(\hat{p}_\tau^{\mathrm{dbb}}\mid p_{1:\tau};\alpha_0,\beta_0)$ over $(\alpha_0,\beta_0)$.
+For most reasonable prior choices, the achievable MSE remains close to the optimum.
+Performance degrades only when $\alpha_0+\beta_0$ is large, where a strong prior diminishes the influence of the $N$ on-policy rewards.
+In that regime, the estimator becomes more sensitive to $\lambda$, which can amplify bias and inflate MSE (Figure~\ref{fig:prior_sensitivity}(b)).
+
+In practice we initialize the Beta posterior with the symmetric uninformative prior $(\alpha_0,\beta_0)=(1,1)$.
+This choice is both reasonable and robust.
+In the absence of prior knowledge about $p_\tau$, symmetric initialization avoids injecting bias toward either outcome.
+At the same time, it keeps the prior mass small relative to typical batch sizes.
+As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
+Overall, MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, but this sensitivity is not a practical concern as long as pathological prior choices are avoided.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
+    \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
+    \label{fig:prior_sensitivity}
+\end{figure}
+
+
 \section{Mean@8 and Best@8 Validation Curves}
 \label{ap:best_at_8}
 
@@ -300,6 +328,40 @@ This further indicates that the sharper exploration of GRPO-DBB preserves the di
 \end{figure}
 
 
+\section{Discount-Factor Search on Qwen3-0.6B-Base}
+\label{ap:lambda_06B}
+
+To further investigate how the optimal discount factor $\lambda$ depends on model scale, we conduct an additional $\lambda$ search on a smaller backbone, Qwen3-0.6B-Base, trained with DAPO-Math-17k.
+Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks for $\lambda\in\{0.25,0.5,0.75,1.0\}$.
+
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{5pt}
+\caption{Effect of the discount factor $\lambda$ of GRPO-DBB on in-distribution Acc@8 performance for Qwen3-0.6B-Base trained on DAPO-Math-17k. The best average performance is attained at $\lambda=0.25$.}
+\label{tab:lambda_06B}
+\resizebox{\linewidth}{!}{
+    \begin{tabular}{lccccc>{\columncolor{AvgCol}}c}
+    \toprule
+    Method & MATH500 & MinervaMath & AIME24 & AIME25 & AMC24 & Avg. \\
+    \midrule
+    \rowcolor{ModelRow}
+    \multicolumn{7}{c}{\textbf{Qwen3-0.6B-Base} trained with \textbf{DAPO-Math-17k}} \\
+    \midrule
+    $\lambda=1.0$  & 47.12 & 14.25 & 2.92 & 0.00 & 10.83 & 15.02 \\
+    $\lambda=0.75$ & 48.05 & 14.52 & 2.08 & 0.42 & 10.28 & 15.07 \\
+    $\lambda=0.5$  & 47.95 & 14.11 & 2.08 & 1.25 & 11.94 & 15.47 \\
+    $\lambda=0.25$ & 49.98 & 14.15 & 3.33 & 1.67 & 8.61  & \textbf{15.55} \\
+    \bottomrule
+    \end{tabular}
+}
+\end{table}
+
+The optimal $\lambda$ for the 0.6B model is $0.25$, smaller than the optimal values $\lambda^\star=0.5$ for 1.7B and $\lambda^\star=0.75$ for 8B.
+Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$.}
+The reason is that their reward distribution shifts more rapidly during training, so the bias of larger $\lambda$ outweighs the variance reduction it provides.
+We extrapolate this rule cautiously to larger models.
+For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
+Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
 \section{Comparison with Per-Prompt EMA and Laplace Smoothing}
 \label{ap:ema_laplace}
 
@@ -357,31 +419,6 @@ It attains the lowest minimum MSE and maintains a broader $\lambda$ range over w
 \end{figure}
 
 
-\section{Sensitivity to the Prior Hyperparameters $(\alpha_0,\beta_0)$}
-\label{ap:prior_sensitivity}
-
-We additionally measure the MSE of the DBB estimator with respect to the prior hyperparameters $(\alpha_0,\beta_0)$ and the discount factor $\lambda$ under the same setup as Section~\ref{sec:mse_analysis}.
-
-Figure~\ref{fig:prior_sensitivity}(a) shows a heatmap of $\min_\lambda \mathrm{MSE}(\hat{p}_\tau^{\mathrm{dbb}}\mid p_{1:\tau};\alpha_0,\beta_0)$ over $(\alpha_0,\beta_0)$.
-For most reasonable prior choices, the achievable MSE remains close to the optimum.
-Performance degrades only when $\alpha_0+\beta_0$ is large, where a strong prior diminishes the influence of the $N$ on-policy rewards.
-In that regime, the estimator becomes more sensitive to $\lambda$, which can amplify bias and inflate MSE (Figure~\ref{fig:prior_sensitivity}(b)).
-
-In practice we initialize the Beta posterior with the symmetric uninformative prior $(\alpha_0,\beta_0)=(1,1)$.
-This choice is both reasonable and robust.
-In the absence of prior knowledge about $p_\tau$, symmetric initialization avoids injecting bias toward either outcome.
-At the same time, it keeps the prior mass small relative to typical batch sizes.
-As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
-Overall, MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, but this sensitivity is not a practical concern as long as pathological prior choices are avoided.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
-    \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
-    \label{fig:prior_sensitivity}
-\end{figure}
-
-
 \section{Hierarchical / Empirical-Bayes Prior}
 \label{ap:emp_bayes}
 
@@ -408,37 +445,3 @@ Combining a hierarchical prior with the discounted update of DBB is a natural di
 \end{figure}
 
 
-\section{Discount-Factor Search on Qwen3-0.6B-Base}
-\label{ap:lambda_06B}
-
-To further investigate how the optimal discount factor $\lambda$ depends on model scale, we conduct an additional $\lambda$ search on a smaller backbone, Qwen3-0.6B-Base, trained with DAPO-Math-17k.
-Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks for $\lambda\in\{0.25,0.5,0.75,1.0\}$.
-
-\begin{table}[t]
-\centering
-\setlength{\tabcolsep}{5pt}
-\caption{Effect of the discount factor $\lambda$ of GRPO-DBB on in-distribution Acc@8 performance for Qwen3-0.6B-Base trained on DAPO-Math-17k. The best average performance is attained at $\lambda=0.25$.}
-\label{tab:lambda_06B}
-\resizebox{\linewidth}{!}{
-    \begin{tabular}{lccccc>{\columncolor{AvgCol}}c}
-    \toprule
-    Method & MATH500 & MinervaMath & AIME24 & AIME25 & AMC24 & Avg. \\
-    \midrule
-    \rowcolor{ModelRow}
-    \multicolumn{7}{c}{\textbf{Qwen3-0.6B-Base} trained with \textbf{DAPO-Math-17k}} \\
-    \midrule
-    $\lambda=1.0$  & 47.12 & 14.25 & 2.92 & 0.00 & 10.83 & 15.02 \\
-    $\lambda=0.75$ & 48.05 & 14.52 & 2.08 & 0.42 & 10.28 & 15.07 \\
-    $\lambda=0.5$  & 47.95 & 14.11 & 2.08 & 1.25 & 11.94 & 15.47 \\
-    $\lambda=0.25$ & 49.98 & 14.15 & 3.33 & 1.67 & 8.61  & \textbf{15.55} \\
-    \bottomrule
-    \end{tabular}
-}
-\end{table}
-
-The optimal $\lambda$ for the 0.6B model is $0.25$, smaller than the optimal values $\lambda^\star=0.5$ for 1.7B and $\lambda^\star=0.75$ for 8B.
-Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$.}
-The reason is that their reward distribution shifts more rapidly during training, so the bias of larger $\lambda$ outweighs the variance reduction it provides.
-We extrapolate this rule cautiously to larger models.
-For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
-Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
