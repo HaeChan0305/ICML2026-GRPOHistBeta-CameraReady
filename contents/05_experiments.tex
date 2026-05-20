@@ -13,7 +13,9 @@ To further assess out-of-distribution generalization, we evaluate performance on
 \paragraph{Baselines.}
 The DBB reward estimation aims to improve reward distribution estimation by partially leveraging historical information.
 To isolate the effect of DBB, we first compare GRPO with the DBB estimator (GRPO-DBB) and naive GRPO, which relies on point estimation.
-In addition, we include three representative baselines: RePO~\citep{li2025reporeplayenhancedpolicyoptimization}, a history-based method that replays full historical trajectories; and two variance-collapse-aware methods, GRESO~\citep{zheng2025actpaysefficientreinforcement}, which probabilistically filters prompts likely to lead to variance collapse, and DAPO~\citep{yu2025dapoopensourcellmreinforcement}, which uses dynamic sampling to discard zero-variance prompts.
+In addition, we include three representative baselines.
+RePO~\citep{li2025reporeplayenhancedpolicyoptimization} is a history-based method that replays full historical trajectories.
+GRESO~\citep{zheng2025actpaysefficientreinforcement} and DAPO~\citep{yu2025dapoopensourcellmreinforcement} are variance-collapse-aware methods: GRESO probabilistically filters prompts likely to lead to variance collapse, while DAPO uses dynamic sampling to discard zero-variance prompts.
 For all baselines, we follow the best configurations reported in their respective papers.
 To ensure a fair comparison, we standardize the total number of rollouts used throughout training across all methods.
 
@@ -25,7 +27,8 @@ Experiments with Qwen3-1.7B-Base and Qwen3-8B-Base are conducted on 4$\times$H20
 Due to the requirement for additional GPU memory, RePO is trained on 8$\times$H200 GPUs for both model scales.
 The rollout batch size is set to 128, and the gradient update batch size is set to 64.
 We sample 8 responses per query from the on-policy model and train the model for a total of four epochs.
-For evaluation, we conduct four independent runs per method with different random seeds, sampling 8 responses per query in each run (i.e., 32 responses per prompt in total), and report Acc@8 as the evaluation metric.
+For evaluation, we conduct four independent runs per method with different random seeds, sampling 8 responses per query in each run (i.e., 32 responses per prompt in total).
+We report Acc@8 as the evaluation metric.
 Each cell reports the mean and standard deviation across the four runs, and statistical significance is assessed via one-sided paired $t$-tests over per-prompt accuracies.
 The training setup details for each baseline and the sampling parameters used for validation and evaluation are also provided in Appendix~\ref{ap:A}.
 
@@ -39,10 +42,18 @@ For GRPO-DBB, the discounting factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Ba
 Further details are provided in Section~\ref{sec:impact_lambda}.
 
 
-For in-distribution evaluation, GRPO-DBB consistently outperforms all four baselines across all benchmarks and model scales. Compared to GRPO, Acc@8 improves by an average of 3.43 points for Qwen3-1.7B-Base and 2.32 points for Qwen3-8B-Base, and the improvements are statistically significant in nearly every cell ($p<0.05$).
-This indicates that, in the RLVR setting, replacing GRPO's point estimator with the DBB estimator is more effective for in-distribution downstream tasks. When compared to the other three baselines (RePO, GRESO, and DAPO), GRPO-DBB still achieves average in-distribution Acc@8 gains of 3.24--4.49 (8B) and 2.96--4.22 (1.7B) points.
-The three baselines exploit historical information in markedly different ways: RePO replays diverse forms of historical information, including tokens, token probabilities, and rewards, while GRESO and DAPO modify the sampling/filtering strategy.
+For in-distribution evaluation, GRPO-DBB consistently outperforms all four baselines across all benchmarks and model scales.
+Compared to GRPO, Acc@8 improves by an average of 3.43 points for Qwen3-1.7B-Base and 2.32 points for Qwen3-8B-Base.
+These improvements are statistically significant in nearly every cell ($p<0.05$).
+This indicates that, in the RLVR setting, replacing GRPO's point estimator with the DBB estimator is more effective for in-distribution downstream tasks.
+When compared to the other three baselines (RePO, GRESO, and DAPO), GRPO-DBB still achieves average in-distribution Acc@8 gains of 3.24--4.49 (8B) and 2.96--4.22 (1.7B) points.
+The three baselines exploit historical information in markedly different ways.
+RePO replays diverse forms of historical information, including tokens, token probabilities, and rewards.
+GRESO and DAPO instead modify the sampling/filtering strategy.
 In contrast, GRPO-DBB relies solely on historical reward statistics.
 Despite this, its strong downstream performance suggests that the DBB estimator utilizes historical information both efficiently and effectively.
 
-For out-of-distribution evaluation, GRPO-DBB consistently outperforms the baselines across nearly all OOD benchmarks and model scales. In particular, it achieves substantial average gains over GRPO of 10.05 and 8.34 points for Qwen3-1.7B-Base and Qwen3-8B-Base, respectively. The only non-significant cell is BBH against RePO on the 1.7B model, where the two methods are statistically indistinguishable. These results demonstrate that the DBB estimation provides a strong advantage in improving generalization, which can be attributed to the characteristic of the Bayesian approach to account for uncertainty.
+For out-of-distribution evaluation, GRPO-DBB consistently outperforms the baselines across nearly all OOD benchmarks and model scales.
+In particular, it achieves substantial average gains over GRPO of 10.05 and 8.34 points for Qwen3-1.7B-Base and Qwen3-8B-Base, respectively.
+The only non-significant cell is BBH against RePO on the 1.7B model, where the two methods are statistically indistinguishable.
+These results demonstrate that the DBB estimation provides a strong advantage in improving generalization, which can be attributed to the Bayesian approach's ability to account for uncertainty.

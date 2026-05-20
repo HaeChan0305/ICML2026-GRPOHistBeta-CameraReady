@@ -235,17 +235,10 @@ As a result, out of the original 17,391 prompts, 17,280 are used for training.
 The hyperparameters shared across all training experiments are summarized in Table~\ref{tab:hyperparams}.
 Our experimental setup follows configurations that are most commonly adopted in recent RLVR studies.
 Following DAPO, we remove the KL regularization term during training.
-Throughout this paper we use PPO clipping in its asymmetric clip-higher form:
-the surrogate ratio $w_{i,t}(\theta)$ is clipped to the interval $[\,1-\epsilon_{\mathrm{low}},\,1+\epsilon_{\mathrm{high}}\,]$, and we write the chosen pair as $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})$.
+Throughout this paper we use PPO clipping in its asymmetric clip-higher form, where the surrogate ratio $w_{i,t}(\theta)$ is clipped to $[\,1-\epsilon_{\mathrm{low}},\,1+\epsilon_{\mathrm{high}}\,]$.
 For all baselines (GRPO, RePO, GRESO, DAPO, and Dr.GRPO), we use $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$, following DAPO.
-For GRPO-DBB and Dr.GRPO-DBB, the importance ratios tend to be larger than those of naive methods because removing GRPO's zero-sum normalization yields advantages with a larger dynamic range.
-Under $(0.2,0.28)$, this results in $2$--$3\times$ higher clip fractions and excessive suppression of meaningful training signals.
-We analyze this effect in detail in Appendix~\ref{ap:clipping}.
-To avoid overly aggressive clipping, we therefore adopt a wider symmetric clipping range of $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.98,0.98)$ specifically for GRPO-DBB and Dr.GRPO-DBB.
-We emphasize that the wider clip range \emph{permits} larger updates but does not by itself induce them.
-As shown in Appendix~\ref{ap:clipping}, GRPO under the same $(0.98,0.98)$ range exhibits similar or even smaller gradient norms.
-It also shows no improvement in policy gradient loss.
-These results indicate that the performance gains of GRPO-DBB stem from the estimator rather than from larger update steps.
+For GRPO-DBB and Dr.GRPO-DBB, we instead use a wider $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.98,0.98)$ to avoid over-clipping the larger advantages produced by the DBB estimator.
+A detailed analysis showing that this choice does not by itself explain the performance gains is provided in Appendix~\ref{ap:clipping}.
 
 For GRESO, we follow the original implementation and use the reported best probabilistic-filtering thresholds; for DAPO we use the dynamic-sampling configuration recommended in the original paper, retaining the same total number of rollouts as the other methods.
 For RePO, which introduces additional hyperparameters and configuration options, we follow the optimal settings recommended in the original paper.
@@ -263,17 +256,23 @@ For statistical significance, we additionally perform four independent evaluatio
 We further investigate whether the performance gains of GRPO-DBB stem from the DBB estimator itself or from the wider clipping range $(0.98,0.98)$ used for it.
 
 \paragraph{Why GRPO-DBB requires a wider clip range.}
-Because the DBB estimator removes GRPO's zero-sum advantage normalization, the magnitude of advantages produced by DBB has a larger dynamic range (except in the degenerate zero-variance case): the same per-token gradients are scaled by a larger factor, leading to larger importance ratios.
-Figure~\ref{fig:clipping}(c) and (d) confirm this empirically: GRPO-DBB exhibits larger gradient norms and larger policy-gradient losses than GRPO regardless of the clip range, indicating that these effects are \emph{intrinsic to the estimator}, not artifacts of the clip range.
+The DBB estimator removes GRPO's zero-sum advantage normalization.
+As a result, the advantages produced by DBB have a larger dynamic range than those of GRPO, except in the degenerate zero-variance case.
+Larger advantages scale the same per-token gradients by a larger factor, leading to larger importance ratios.
+Figure~\ref{fig:clipping}(c) and (d) confirm this empirically: GRPO-DBB exhibits larger gradient norms and larger policy-gradient losses than GRPO regardless of the clip range.
+These effects are therefore \emph{intrinsic to the estimator}, not artifacts of the clip range.
 
 \paragraph{Controls.}
-We train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$ and compare four diagnostics in Figure~\ref{fig:clipping}: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
+We train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$.
+Figure~\ref{fig:clipping} compares four diagnostics: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
 
-Under the standard $(0.2,0.28)$ range, GRPO-DBB suffers a $2$--$3\times$ higher clip fraction than GRPO (Figure~\ref{fig:clipping}(b)), which suppresses a substantial portion of meaningful training signal and noticeably degrades Acc@8 (Figure~\ref{fig:clipping}(a)).
-Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected gains and outperforms GRPO, showing that the improvements are not merely a consequence of taking larger gradient steps.
+Under the standard $(0.2,0.28)$ range, GRPO-DBB suffers a $2$--$3\times$ higher clip fraction than GRPO (Figure~\ref{fig:clipping}(b)).
+This suppresses a substantial portion of meaningful training signal and noticeably degrades Acc@8 (Figure~\ref{fig:clipping}(a)).
+Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected gains and outperforms GRPO.
+This already shows that the improvements are not merely a consequence of taking larger gradient steps.
 Critically, GRPO under the same wider $(0.98,0.98)$ range shows similar or even smaller gradient norms and no improvement in policy gradient loss compared to GRPO under $(0.2,0.28)$.
 This rules out the hypothesis that a wider clip range mechanically improves performance.
-Accordingly, in all main-table experiments we report each method with the best clipping configuration for that method.
+Accordingly, in all main-table experiments we report each method with its own best clipping configuration.
 
 \begin{figure}[t]
     \centering
@@ -293,7 +292,8 @@ These results indicate that the lower entropy of GRPO-DBB (Figure~\ref{fig:train
 
 To quantify this, we additionally evaluate the best checkpoint of each method on the six in-distribution benchmarks with four independent evaluation seeds (i.e., 32 responses per prompt).
 GRPO attains Best@8 scores of $61.75\pm0.92$ (8B) and $39.79\pm0.26$ (1.7B), while GRPO-DBB attains $63.61\pm1.16$ (8B) and $43.73\pm0.43$ (1.7B).
-The Best@8 improvements of GRPO-DBB are well outside the standard deviations, indicating that the gains are statistically meaningful and that the sharper exploration of GRPO-DBB preserves the diversity of useful response trajectories.
+The Best@8 improvements of GRPO-DBB are well outside the standard deviations, so the gains are statistically meaningful.
+This further indicates that the sharper exploration of GRPO-DBB preserves the diversity of useful response trajectories.
 
 \begin{figure}[t]
     \centering
@@ -349,7 +349,8 @@ Following the protocol of Section~\ref{sec:mse_analysis} (Qwen3-1.7B-Base, 128-r
 As shown in Figure~\ref{fig:ema_laplace}, GRPO-DBB achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
 EMA attains its best MSE of $0.0086$ at $\lambda=0.3$ ($+2.67\%$ over DBB) and degrades rapidly as $\lambda$ grows, indicating high sensitivity to $\lambda$.
 Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$ ($+21.71\%$ over DBB) and also outperforms point estimation only within a narrow $\lambda$ range.
-Overall, DBB is the most favorable option among these light-weight shrinkage estimators: it attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on point estimation.
+Overall, DBB is the most favorable option among these light-weight shrinkage estimators.
+It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on point estimation.
 
 \begin{figure}[t]
     \centering
@@ -366,12 +367,15 @@ We additionally measure the MSE of the DBB estimator with respect to the prior h
 
 Figure~\ref{fig:prior_sensitivity}(a) shows a heatmap of $\min_\lambda \mathrm{MSE}(\hat{p}_\tau^{\mathrm{dbb}}\mid p_{1:\tau};\alpha_0,\beta_0)$ over $(\alpha_0,\beta_0)$.
 For most reasonable prior choices, the achievable MSE remains close to the optimum.
-Performance degrades only when $\alpha_0+\beta_0$ is large, since a strong prior diminishes the influence of the $N$ on-policy rewards: the estimator becomes more sensitive to $\lambda$, which can amplify bias and inflate MSE (Figure~\ref{fig:prior_sensitivity}(b)).
+Performance degrades only when $\alpha_0+\beta_0$ is large, where a strong prior diminishes the influence of the $N$ on-policy rewards.
+In that regime, the estimator becomes more sensitive to $\lambda$, which can amplify bias and inflate MSE (Figure~\ref{fig:prior_sensitivity}(b)).
 
 In practice we initialize the Beta posterior with the symmetric uninformative prior $(\alpha_0,\beta_0)=(1,1)$.
-This choice is both reasonable and robust: in the absence of prior knowledge about $p_\tau$, symmetric initialization avoids injecting bias toward either outcome, while keeping the prior mass small relative to typical batch sizes.
+This choice is both reasonable and robust.
+In the absence of prior knowledge about $p_\tau$, symmetric initialization avoids injecting bias toward either outcome.
+At the same time, it keeps the prior mass small relative to typical batch sizes.
 As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
-Overall, although MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, this sensitivity is not a practical concern as long as pathological prior choices are avoided.
+Overall, MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, but this sensitivity is not a practical concern as long as pathological prior choices are avoided.
 
 \begin{figure}[t]
     \centering
@@ -436,5 +440,8 @@ Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks f
 \end{table}
 
 The optimal $\lambda$ for the 0.6B model is $0.25$, smaller than the optimal values $\lambda^\star=0.5$ for 1.7B and $\lambda^\star=0.75$ for 8B.
-Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$ because their reward distribution shifts more rapidly during training, making the bias of larger $\lambda$ more harmful than the variance reduction is helpful.}
-We extrapolate this rule cautiously: for $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point, while harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
+Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$.}
+The reason is that their reward distribution shifts more rapidly during training, so the bias of larger $\lambda$ outweighs the variance reduction it provides.
+We extrapolate this rule cautiously to larger models.
+For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
+Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
