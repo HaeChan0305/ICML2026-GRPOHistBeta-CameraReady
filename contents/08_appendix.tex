@@ -256,7 +256,7 @@ For statistical significance, we additionally perform four independent evaluatio
 \section{Isolating the Effect of the Clipping Range}
 \label{ap:clipping}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/figure4_clipping.pdf}
     \caption{Training dynamics of Qwen3-1.7B-Base with GRPO and GRPO-DBB under clipping ranges $(0.2,0.28)$ and $(0.98,0.98)$. From left to right: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss. GRPO-DBB suffers excessive clipping under the standard range; once the range is widened, it recovers strong performance. GRPO under the wider range shows no improvement, confirming that the gains of GRPO-DBB are due to the DBB estimator rather than the clip range.}
@@ -280,14 +280,13 @@ Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected 
 Critically, GRPO under the same wider $(0.98,0.98)$ range shows similar or even smaller gradient norms and no improvement in policy gradient loss compared to GRPO under $(0.2,0.28)$.
 This rules out the hypothesis that a wider clip range mechanically improves performance.
 Accordingly, in all main-table experiments we report each method with its own best clipping configuration.
-
-
+\FloatBarrier
 
 
 \section{Sensitivity to the Prior Hyperparameters $(\alpha_0,\beta_0)$}
 \label{ap:prior_sensitivity}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
     \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
@@ -307,6 +306,7 @@ In the absence of prior knowledge about $p_\tau$, symmetric initialization avoid
 At the same time, it keeps the prior mass small relative to typical batch sizes.
 As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
 Overall, MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, but this sensitivity is not a practical concern as long as pathological prior choices are avoided.
+\FloatBarrier
 
 
 \section{Mean@8 and Best@8 Validation Curves}
@@ -322,12 +322,13 @@ GRPO attains Best@8 scores of $61.75\pm0.92$ (8B) and $39.79\pm0.26$ (1.7B), whi
 The Best@8 improvements of GRPO-DBB are well outside the standard deviations, so the gains are statistically meaningful.
 This further indicates that the sharper exploration of GRPO-DBB preserves the diversity of useful response trajectories.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/figure5_mean8_best8.pdf}
     \caption{Validation performance of Qwen3-1.7B-Base (top) and Qwen3-8B-Base (bottom) trained with GRPO and GRPO-DBB. The left column shows Mean@8 (= Acc@8) and the right column shows Best@8 on the validation set. Despite producing lower entropy during training, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales.}
     \label{fig:best8}
 \end{figure}
+\FloatBarrier
 
 
 \section{Discount-Factor Search on Qwen3-0.6B-Base}
@@ -336,7 +337,7 @@ This further indicates that the sharper exploration of GRPO-DBB preserves the di
 To further investigate how the optimal discount factor $\lambda$ depends on model scale, we conduct an additional $\lambda$ search on a smaller backbone, Qwen3-0.6B-Base, trained with DAPO-Math-17k.
 Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks for $\lambda\in\{0.25,0.5,0.75,1.0\}$.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \setlength{\tabcolsep}{5pt}
 \caption{Effect of the discount factor $\lambda$ of GRPO-DBB on in-distribution Acc@8 performance for Qwen3-0.6B-Base trained on DAPO-Math-17k. The best average performance is attained at $\lambda=0.25$.}
@@ -364,6 +365,7 @@ The reason is that their reward distribution shifts more rapidly during training
 We extrapolate this rule cautiously to larger models.
 For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
 Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
+\FloatBarrier
 
 
 \section{Comparison with Per-Prompt EMA and Laplace Smoothing}
@@ -420,12 +422,13 @@ Similarly, Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$, 
 Overall, DBB estimator is the most favorable option among these light-weight shrinkage estimators.
 It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on the point estimator.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.85\columnwidth]{figures/figure6_ema_laplace.pdf}
     \caption{MSE versus $\lambda$ for per-prompt exponential moving average (EMA), Laplace smoothing (Laplace), point estimator (GRPO), and DBB estimator (GRPO-DBB). DBB estimator attains the lowest minimum MSE at $\lambda=0.4$ and improves on the point estimator over a broader range of $\lambda$ than EMA or Laplace.}
     \label{fig:ema_laplace}
 \end{figure}
+\FloatBarrier
 
 
 \section{Hierarchical / Empirical-Bayes Prior}
@@ -463,11 +466,12 @@ However, its minimum achievable MSE is higher than that of DBB estimator (Figure
 This suggests a trade-off between robustness (i.e., reduced dependence on $\lambda$) and optimal performance.
 Combining a hierarchical prior with the discounted update of DBB estimator is a natural direction for future work.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.85\columnwidth]{figures/figure8_hierarchy.pdf}
     \caption{MSE versus $\lambda$ for the Empirical Bayes estimator with online method-of-moments (EB), point estimator (GRPO), and DBB estimator (GRPO-DBB). EB improves over the point estimator without per-prompt tuning, but DBB attains a lower minimum MSE.}
     \label{fig:emp_bayes}
 \end{figure}
+\FloatBarrier
 
 
