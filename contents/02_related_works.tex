@@ -1,0 +1,20 @@
+\section{Related Work}
+
+\paragraph{Reinforcement Learning with Verifiable Rewards.}
+Reinforcement learning with verifiable rewards (RLVR) has emerged as an effective post-training paradigm for improving the reasoning capabilities of large language models by leveraging automatically verifiable reward signals \cite{lambert2025tulu3pushingfrontiers, plaat}. 
+In particular, group-based RLVR algorithms, including GRPO and its variants \cite{shao2024deepseekmath, yu2025dapoopensourcellmreinforcement, liu2025understandingr1zeroliketrainingcritical, zheng2025groupsequencepolicyoptimization, zhao2025geometricmeanpolicyoptimization}, have demonstrated strong performance on reasoning benchmarks without relying on explicit value models \cite{yu2025rlprextrapolatingrlvrgeneral}.
+
+\paragraph{Variance Collapse in Group-Based RLVR.}
+A well-known limitation of group-based RLVR methods is variance collapse, where the estimated reward variance becomes zero when all sampled responses receive identical rewards, eliminating the training signal and leading to ineffective policy updates \cite{yu2025dapoopensourcellmreinforcement, zheng2025actpaysefficientreinforcement, le2025promptleftbehindexploiting, zhang2025improving}. 
+Prior approaches such as Dynamic sAmpling Policy Optimization (DAPO; \citeauthor{yu2025dapoopensourcellmreinforcement}, \citeyear{yu2025dapoopensourcellmreinforcement}) and GRESO \cite{zheng2025actpaysefficientreinforcement} mitigate this issue by modifying the rollout or sampling strategy. 
+However, these methods either incur substantial additional computational cost or fail to fundamentally eliminate variance collapse due to their probabilistic or heuristic nature.
+
+In contrast, our work addresses variance collapse at the reward estimator level by explicitly modeling uncertainty in the reward distribution. 
+By maintaining a Beta posterior with strictly positive parameters, the DBB process theoretically prevents variance collapse without additional rollouts or changes to the sampling strategy.
+
+\paragraph{Replay- and History-Based RLVR Methods.}
+Replay-based methods aim to improve sample efficiency in RLVR by reusing historical rollouts, as exemplified by RePO \cite{li2025reporeplayenhancedpolicyoptimization} and ExGRPO \cite{zhan2025exgrpolearningreasonexperience}. 
+While potentially effective, these approaches require storing tokens and their probabilities under historical policies and performing additional forward passes, introducing non-trivial memory and computational overhead.
+
+Our approach differs in that it leverages only historical reward statistics rather than full trajectory information, eliminating the need for additional GPU memory or extra forward passes. 
+Empirical results demonstrate that reward signals alone can effectively capture useful historical information for improving RLVR performance.

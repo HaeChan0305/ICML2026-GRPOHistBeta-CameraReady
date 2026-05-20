@@ -1,0 +1,45 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{5pt}
+\caption{Effect of the discount factor $\lambda$ of GRPO-DBB on in-distribution Acc@8 performance.
+Qwen3-8B-Base achieves the best performance at $\lambda=0.75$, while Qwen3-1.7B-Base performs best at $\lambda=0.5$.}
+\label{tab:lambda}
+\resizebox{\linewidth}{!}{
+    \begin{tabular}{lcccccc>{\columncolor{AvgCol}}c}
+    \toprule
+    Method & MATH500 & Minerva & AIME24 & AIME25 & AMC24 & Olympiad & Avg. \\
+    \midrule
+    
+    \rowcolor{ModelRow}
+    \multicolumn{8}{c}{\textbf{Qwen3-8B-Base} trained with \textbf{DAPO 17k}} \\
+    \midrule
+    $\lambda = 1.0$
+    & 89.08 & 37.91 & 33.33 & 26.25 & 59.44 & 55.19 & 50.20 \\
+    $\lambda = 0.75$
+    & 88.92 & 39.48 & 34.17 & 30.83 & 60.00 & 56.34 & \textbf{51.62} \\
+    $\lambda = 0.5$
+    & 89.35 & 38.56 & 33.33 & 27.08 & 59.17 & 56.19 & 50.61 \\
+    $\lambda = 0.25$
+    & 88.82 & 39.98 & 30.83 & 25.83 & 60.83 & 56.34 & 50.44 \\
+    GRPO
+    & 88.05 & 39.25 & 30.00 & 26.67 & 56.39 & 54.82 & 49.20 \\
+    
+    \midrule
+    \rowcolor{ModelRow}
+    \multicolumn{8}{c}{\textbf{Qwen3-1.7B-Base} trained with \textbf{DAPO 17k}} \\
+    \midrule
+    $\lambda = 1.0$
+    & 67.30 & 25.55 & 9.58 & 3.33 & 23.33 & 28.65 & 26.29 \\
+    $\lambda = 0.75$
+    & 72.28 & 25.60 & 11.25 & 7.50 & 26.39 & 32.68 & 29.28 \\
+    $\lambda = 0.5$
+    & 71.95 & 26.31 & 14.17 & 7.08 & 26.94 & 33.29 & \textbf{29.96} \\
+    $\lambda = 0.25$
+    & 72.22 & 25.97 & 14.17 & 6.25 & 22.50 & 32.88 & 29.00 \\
+    GRPO
+    & 68.37 & 25.74 & 8.75 & 4.58 & 23.61 & 29.41 & 26.74 \\
+    
+    \bottomrule
+    \end{tabular}
+}
+\end{table}

@@ -1,0 +1,60 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}  % 기본 6pt → 3pt
+\caption{
+In-distribution (ID) and out-of-distribution (OOD) evaluation results trained on DAPO-Math-17k.
+GRPO with the DBB process (GRPO-DBB) consistently outperforms naive GRPO across all benchmarks and model scales.
+$\Delta$ denotes the absolute Acc@8 improvement of GRPO-DBB over GRPO.
+}
+\label{tab:main_results}
+\resizebox{0.85\textwidth}{!}{
+    \begin{tabular}{lcccccc>{\columncolor{AvgCol}}c|ccc>{\columncolor{AvgCol}}c}
+    \toprule
+    & \multicolumn{7}{c|}{\textbf{In-Distribution}} 
+    & \multicolumn{4}{c}{\textbf{Out-of-Distribution}} \\
+    \cmidrule(lr){2-8} \cmidrule(lr){9-12}
+    Method 
+    & MATH500 & Minerva & AIME24 & AIME25 & AMC24 & Olympiad & Avg.
+    & MMLU-Pro & GPQA-D & BBH & Avg. \\
+    \midrule
+    
+    \rowcolor{ModelRow}
+    \multicolumn{12}{c}{\textbf{Qwen3-8B-Base} trained with \textbf{DAPO-Math-17k}} \\
+    \midrule
+    GRPO
+    & 88.05 & 39.25 & 30.00 & 26.67 & 56.39 & 54.82 & 49.20
+    & 50.02 & 42.93 & 59.18 & 50.71 \\
+    RePO
+    & 86.20 & 35.71 & 27.92 & 22.92 & 56.11 & 52.61 & 46.91
+    & 53.15 & 43.93 & 42.96 & 46.68 \\
+    \midrule
+    GRPO-DBB
+    & \textbf{88.92} & \textbf{39.48} & \textbf{34.17} & \textbf{30.83} & \textbf{60.00} & \textbf{56.34} & \textbf{51.62}
+    & \textbf{63.12} & \textbf{46.46} & \textbf{63.32} & \textbf{57.63} \\
+    $\Delta$ w.r.t.\ GRPO
+    & +0.87 & +0.23 & +4.17 & +4.16 & +3.61 & +1.52 & +2.42
+    & +13.10 & +3.53 & +4.14 & +6.92 \\
+    
+    \midrule
+    \rowcolor{ModelRow}
+    \multicolumn{12}{c}{\textbf{Qwen3-1.7B-Base} trained with \textbf{DAPO-Math-17k}} \\
+    \midrule
+    GRPO
+    & 68.37 & 25.74 & 8.75 & 4.58 & 23.61 & 29.41 & 26.74
+    & 33.72 & 20.70 & 12.71 & 22.38 \\
+    RePO
+    & 67.87 & 23.76 & 6.67 & 6.67 & 21.67 & 29.17 & 25.97
+    & 35.49 & 26.26 & 30.95 & 30.90 \\
+    \midrule
+    GRPO-DBB
+    & \textbf{71.95} & \textbf{26.31} & \textbf{14.17} & \textbf{7.08} & \textbf{26.94} & \textbf{33.29} & \textbf{29.96}
+    & \textbf{40.83} & \textbf{29.80} & \textbf{33.97} & \textbf{34.87} \\
+    $\Delta$ w.r.t.\ GRPO
+    & +3.58 & +0.57 & +5.42 & +2.50 & +3.33 & +3.88 & +3.22
+    & +7.11 & +9.10 & +21.26 & +12.49 \\
+    
+    \bottomrule
+    \end{tabular}
+}
+\end{table*}

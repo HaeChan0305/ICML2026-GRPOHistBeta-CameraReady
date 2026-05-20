@@ -1,0 +1,55 @@
+\section{Preliminaries}
+% In this section, before introducing the Discounted Beta–Bernoulli reward estimation, we first review RLVR and GRPO, which constitute the core prior work underpinning our approach.
+We briefly introduce RLVR and its commonly used baseline, GRPO, to establish the foundation for our method.
+
+\subsection{Reinforcement Learning with Verifiable Rewards}
+Given a prompt $q \sim \mathcal{D}$ from the training dataset and a policy $\pi_{\theta}$, a generated response is $o \sim \pi_{\theta}(\cdot \mid q)$.
+In RLVR, the reward function $r(\cdot)$ is typically defined as a binary signal indicating whether the response contains a correct answer.
+
+% \vspace{-2mm}
+\begin{equation}
+r(o, q) =
+\begin{cases}
+1, & \text{if $o$ contains the answer of $q$} \\
+0, & \text{otherwise}.
+\end{cases}
+\end{equation}
+% \vspace{-2mm}
+
+\subsection{Group Relative Policy Optimization (GRPO)}
+GRPO \cite{shao2024deepseekmath} is a foundational baseline for RLVR that eliminates the need for an explicit value model and Generalized Advantage Estimation \cite{ppo}. Instead, it relies on group-relative normalization to estimate advantages. 
+
+For a given prompt $q$, GRPO samples $N$ independent responses $\{o_i\}_{i=1}^{N}$ from the old policy $\pi_{\theta_{\mathrm{old}}}$ and computes advantages by normalizing the corresponding rewards $\{r(o_i, q)\}_{i=1}^{N}$ within the group:
+
+% \vspace{-2mm}
+\begin{equation}
+\hat{A}_i
+=
+\frac{r(o_i, q) - \mu}{\sigma},
+\end{equation}
+% \vspace{-2mm}
+
+where $\mu = \frac{\sum_{i=1}^{N} r(o_i, q)}{N}$ and $\sigma^2 = \frac{\sum_{i=1}^{N} \left(r(o_i, q) - \mu\right)^2}{N-1}$.
+The resulting advantage $\hat{A}_i$ is broadcast to all tokens in the response, i.e., $\hat{A}_{i,t} = \hat{A}_i$ for all token positions $t$.
+
+The policy is then updated by maximizing a clipped surrogate objective based on estimated advantages:
+\begin{equation}
+\label{eq:grpo}
+\begin{aligned}
+&\mathcal{J}_{\mathrm{GRPO}}(\theta)
+=
+\mathbb{E}_{q \sim \mathcal{D},\, \{o_i\}_{i=1}^{N} \sim \pi_{\theta_{\mathrm{old}}}(\cdot \mid q)}
+\Bigg[
+\frac{1}{N}
+\sum_{i=1}^{N}
+\frac{1}{|o_i|}
+\sum_{t=1}^{|o_i|}\\
+&\min \Big(
+w_{i,t}(\theta)\, \hat{A}_{i,t},
+\mathrm{clip}\!\big(w_{i,t}(\theta), 1-\epsilon, 1+\epsilon\big)\, \hat{A}_{i,t}
+\Big)
+\Bigg],
+\end{aligned}
+\end{equation}
+where $\epsilon$ is the clipping hyperparameter and 
+$w_{i,t}(\theta)=\frac{\pi_\theta(o_{i,t} \mid q, o_{i,<t})}{\pi_{\theta_{\mathrm{old}}}(o_{i,t} \mid q, o_{i,<t})}$ denotes the per-token importance weight. Following DAPO \cite{yu2025dapoopensourcellmreinforcement}, we omit the KL divergence term between the online and reference policies, as it may restrict exploration.

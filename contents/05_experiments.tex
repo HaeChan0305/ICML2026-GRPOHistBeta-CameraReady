@@ -1,0 +1,42 @@
+\section{Experiments}
+We empirically demonstrate that DBB estimation is effective in the RLVR setting. Section~\ref{subsec:expsetting} describes the models, datasets, baselines, and detailed setup used in our experiments, while Section~\ref{subsec:mainresult} presents the experimental results.
+
+\subsection{Experimental Settings}
+\label{subsec:expsetting}
+
+\paragraph{Models \& Datasets.}
+We conduct experiments on two model sizes, Qwen3-1.7B-Base and Qwen3-8B-Base \cite{yang2025qwen3technicalreport}, to investigate the effect of model scales.
+For both model scales, we use DAPO-Math-17k \cite{yu2025dapoopensourcellmreinforcement} as the training dataset.
+As in-distribution evaluation benchmarks for mathematical reasoning, we consider six widely used datasets: MATH500 \cite{math500}, Minerva \cite{minerva}, AIME24/25, AMC24 \cite{li2024numinamath}, and OlympiadBench (Olympiad; \citeauthor{olympiad}, \citeyear{olympiad}).
+To further assess out-of-distribution generalization, we evaluate performance on MMLU-Pro \cite{mmlupro}, GPQA-Diamond (GPQA-D; \citeauthor{gpqa}, \citeyear{gpqa}), and Big-Bench Hard (BBH; \citeauthor{bbh}, \citeyear{bbh}).
+
+\paragraph{Baselines.}
+The DBB reward estimation aims to improve reward distribution estimation by partially leveraging historical information.
+To isolate the effect of DBB, we first compare GRPO with the DBB estimator (GRPO-DBB) and naive GRPO, which relies on point estimation.
+In addition, to compare against methods that more fully exploit historical information, we include RePO as a representative method in this category.
+
+
+
+\paragraph{Training \& Evaluation Setups.}
+All training experiments are conducted using the \texttt{verl}\footnote{\url{https://github.com/verl-project/verl}} framework, and \texttt{Math-Verify}\footnote{\url{https://github.com/huggingface/Math-Verify}} is employed to extract and verify final answers.
+Experiments with Qwen3-1.7B-Base and Qwen3-8B-Base are conducted on 4$\times$H200 and 8$\times$H200 GPUs, respectively, except for RePO.
+Due to the requirement for additional GPU memory, RePO is trained on 8$\times$H200 GPUs for both model scales.
+The rollout batch size is set to 128, and the gradient update batch size is set to 64.
+We sample 8 responses per query from the on-policy model and train the model for a total of four epochs.
+For evaluation, we sample 8 responses per query for all benchmarks and report Avg@8 as the evaluation metric.
+The training setup details for each baseline and the sampling parameters used for validation and evaluation are also provided in Appendix~\ref{ap:A}.
+
+
+
+\subsection{Main Results}
+\label{subsec:mainresult}
+\input{contents/main_table_merged}
+Table~\ref{tab:main_results} reports Acc@8 results across six mathematical reasoning in-distribution benchmarks and three general reasoning out-of-distribution (OOD) benchmarks for three different RLVR algorithms.
+For GRPO-DBB, the discounting factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base and $0.75$ for Qwen3-8B-Base; these values are empirically selected based on performance trends under varying $\lambda$.
+Further details are provided in Section~\ref{sec:impact_lambda}.
+
+
+For in-distribution evaluation, GRPO-DBB consistently outperforms both GRPO and RePO across all benchmarks and model scales. Compared to GRPO, Acc@8 improves by an average of 3.22 points for Qwen3-1.7B-Base and 2.42 points for Qwen3-8B-Base. 
+This indicates that, in the RLVR setting, replacing GRPO’s point estimator with the DBB estimator is more effective for in-distribution downstream tasks. When compared to RePO, GRPO-DBB achieves improvements of 3.99 and 4.71 points for Qwen3-1.7B-Base and Qwen3-8B-Base, respectively. Although RePO leverages diverse forms of historical information, including tokens, token probabilities, and rewards, GRPO-DBB relies solely on rewards. Despite this, its strong downstream performance suggests that the DBB estimator utilizes historical information both efficiently and effectively.
+
+For out-of-distribution evaluation, GRPO-DBB consistently outperforms both baselines across all OOD benchmarks and model scales. In particular, it achieves substantial gains over GRPO, with improvements of 12.49 and 6.92 points for Qwen3-1.7B-Base and Qwen3-8B-Base, respectively. These results demonstrate that the DBB estimation provides a strong advantage in improving generalization, which can be attributed to the characteristic of the Bayesian approach to account for uncertainty.

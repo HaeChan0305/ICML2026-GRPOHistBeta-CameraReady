@@ -1,0 +1,32 @@
+
+\begin{algorithm}[t]
+\caption{Discounted Beta--Bernoulli Reward Estimation}
+\label{alg:grpohistbeta}
+\begin{algorithmic}[1]
+\INPUT LLM policy $\pi_\theta$, training dataset $\mathcal{D}$
+\STATE Initialize $(\alpha^q_0,\beta^q_0) \leftarrow (1,1) \quad \forall q\in\mathcal{D}$
+
+\FOR{$\text{epoch} \ \tau = 1,\dots,I$}
+  \FOR{$\text{iteration} = 1,\dots,M$}
+    \STATE Sample a minibatch $\mathcal{D}_b \subset \mathcal{D}$
+    \STATE Set old policy $\pi_{\theta_{\mathrm{old}}} \leftarrow \pi_{\theta}$
+    \FOR{each prompt $q \in \mathcal{D}_b$}
+      \STATE Sample outputs $\{o_i\}_{i=1}^N \overset{\text{i.i.d.}}{\sim} \pi_{\theta_{\mathrm{old}}}(\cdot \mid q)$
+      \STATE Compute rewards $\{X_i=r(o_i, q)\}_{i=1}^N$
+      \STATE Update posterior parameters:
+      \STATE \hspace{1em}\(
+      \begin{aligned}
+        \alpha^q_{\tau} &\leftarrow \lambda \alpha^q_{\tau-1} + \sum_{i=1}^N X_i, \\
+        \beta^q_{\tau}  &\leftarrow \lambda \beta^q_{\tau-1}  + N - \sum_{i=1}^N X_i
+      \end{aligned}
+      \)
+      \STATE Compute advantage $\hat{A}_i$ with $(\alpha^q_{\tau},\beta^q_{\tau})$ and $X_i$
+    \ENDFOR
+
+    \FOR{$\text{update} = 1,\dots,U$}
+      \STATE Update $\pi_{\theta}$ by maximizing the objective (Eq.~\ref{eq:grpo})
+    \ENDFOR
+  \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}

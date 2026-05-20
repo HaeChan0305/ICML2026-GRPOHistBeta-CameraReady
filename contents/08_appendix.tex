@@ -1,0 +1,252 @@
+\newpage
+\appendix
+\onecolumn
+
+\section{Comparison of Statistics Between Point Estimation and Discounted Beta--Bernoulli Estimation}
+\FloatBarrier
+
+We present Table~\ref{tab:estimator_comparison} that summarizes the statistics of point estimation and Discounted Beta--Bernoulli estimation, as discussed in Sections~\ref{subsec:problem_formulation} and~\ref{subsec:grpohistbeta}, in a concise and accessible manner.
+
+
+\input{contents/comparison_table}
+\FloatBarrier
+
+
+
+\section{Derivation of the Mean, Variance, and MSE of the DBB Estimator}
+\label{app:hb-derivation}
+
+In this section, we provide a detailed derivation of Equations~\eqref{eq:hb_expectation_pseq} and~\eqref{eq:hb_variance_pseq} in the main text.
+To avoid ambiguity caused by implicit conditioning, we re-express the analysis in terms of the conditional distribution given the sequence of true reward probabilities $\{p_1, p_2, \dots, p_\tau\}$.
+
+\subsection{Expansion of Posterior Parameters under Historical Rewards}
+
+At each training step $k$, rollout rewards satisfy
+\begin{equation}
+S_k \mid p_k \sim \mathrm{Binomial}(N, p_k),
+\qquad
+X_{k,i} \mid p_k \sim \mathrm{Bernoulli}(p_k),
+\end{equation}
+and the DBB updates are given by
+\begin{equation}
+\alpha_k = \lambda \alpha_{k-1} + S_k,
+\qquad
+\beta_k = \lambda \beta_{k-1} + (N - S_k).
+\end{equation}
+
+Unrolling the recursion yields
+\begin{equation}
+\alpha_\tau
+=
+\lambda^\tau \alpha_0
++
+\sum_{k=1}^{\tau} \lambda^{\tau-k} S_k,
+\end{equation}
+and the total mass
+\begin{equation}
+H_\tau
+\;\triangleq\;
+\alpha_\tau + \beta_\tau
+=
+\lambda^\tau(\alpha_0 + \beta_0)
++
+N \sum_{k=1}^{\tau} \lambda^{\tau-k}.
+\end{equation}
+
+Crucially, when $N$ and $\lambda$ are fixed, $H_\tau$ is deterministic and does not depend on the random variables $\{S_k\}_{k=1}^{\tau}$.
+All stochasticity in the estimator arises from $\alpha_\tau$ alone.
+
+\subsection{Mean of the DBB Estimator}
+
+The DBB estimator is defined as
+\begin{equation}
+\hat{p}_\tau^{\mathrm{dbb}} = \frac{\alpha_\tau}{H_\tau}.
+\end{equation}
+Since $H_\tau$ is deterministic,
+\begin{equation}
+\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right]
+=
+\frac{\mathbb{E}[\alpha_\tau \mid p_{1:\tau}]}{H_\tau}.
+\end{equation}
+
+Using $\mathbb{E}[S_k \mid p_k] = N p_k$, we obtain
+\begin{equation}
+\mathbb{E}[\alpha_\tau \mid p_{1:\tau}]
+=
+\lambda^\tau \alpha_0
++
+N \sum_{k=1}^{\tau} \lambda^{\tau-k} p_k.
+\end{equation}
+Therefore,
+\begin{equation}
+\boxed{
+\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right]
+=
+\frac{\lambda^\tau \alpha_0 + N \sum_{k=1}^{\tau} \lambda^{\tau-k} p_k}
+{\lambda^\tau(\alpha_0+\beta_0)+N \sum_{k=1}^{\tau} \lambda^{\tau-k}}
+}
+\label{eq:hb-mean}
+\end{equation}
+
+For interpretability, define weights
+\begin{equation}
+c_0 \triangleq \frac{\lambda^\tau(\alpha_0+\beta_0)}{H_\tau},
+\qquad
+c_k \triangleq \frac{N\lambda^{\tau-k}}{H_\tau}, \quad k=1,\dots,\tau,
+\qquad
+p_0 \triangleq \frac{\alpha_0}{\alpha_0+\beta_0}.
+\end{equation}
+Then the estimator mean can be written as
+\begin{equation}
+\boxed{
+\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right]
+=
+\sum_{k=0}^{\tau} c_k p_k,
+\qquad
+\sum_{k=0}^{\tau} c_k = 1,
+}
+\label{eq:hb-mean-weighted}
+\end{equation}
+revealing an exponentially weighted average of historical reward probabilities.
+
+\subsection{Variance of the DBB Estimator}
+
+Again using the determinism of $H_\tau$,
+\begin{equation}
+\mathrm{Var}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right)
+=
+\frac{\mathrm{Var}(\alpha_\tau \mid p_{1:\tau})}{H_\tau^2}.
+\end{equation}
+
+Since $\{S_k\}$ are independent conditioned on $\{p_k\}$ and
+$\mathrm{Var}(S_k \mid p_k)=N p_k(1-p_k)$,
+\begin{equation}
+\mathrm{Var}(\alpha_\tau \mid p_{1:\tau})
+=
+\sum_{k=1}^{\tau} \lambda^{2(\tau-k)} N p_k(1-p_k).
+\end{equation}
+Hence,
+\begin{equation}
+\boxed{
+\mathrm{Var}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right)
+=
+\frac{\sum_{k=1}^{\tau} \lambda^{2(\tau-k)} N p_k(1-p_k)}
+{\left(\lambda^\tau(\alpha_0+\beta_0)+N \sum_{k=1}^{\tau} \lambda^{\tau-k}\right)^2}
+}
+\label{eq:hb-var}
+\end{equation}
+
+\subsection{Bias and Mean Squared Error of the DBB Estimator}
+
+By definition,
+\begin{equation}
+\mathrm{MSE}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right)
+=
+\mathrm{Bias}^2 + \mathrm{Var}.
+\end{equation}
+
+Using Eq.~\eqref{eq:hb-mean-weighted}, the conditional bias is
+\begin{equation}
+\boxed{
+\mathrm{Bias}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right)
+=
+\sum_{k=0}^{\tau-1} c_k (p_k-p_\tau),
+}
+\label{eq:hb-bias}
+\end{equation}
+where the $k=\tau$ term vanishes since $p_\tau-p_\tau=0$.
+
+Combining Eqs.~\eqref{eq:hb-var} and~\eqref{eq:hb-bias}, we obtain
+\begin{equation}
+\boxed{
+\mathrm{MSE}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau}\right)
+=
+\left(
+\sum_{k=0}^{\tau-1} c_k (p_k-p_\tau)
+\right)^2
++
+\frac{\sum_{k=1}^{\tau} \lambda^{2(\tau-k)} N p_k(1-p_k)}{H_\tau^2},
+}
+\label{eq:hb-mse}
+\end{equation}
+where $H_\tau=\lambda^\tau(\alpha_0+\beta_0)+N \sum_{k=1}^{\tau} \lambda^{\tau-k}$.
+
+
+\section{Implementation Details}
+\label{ap:A}
+
+\FloatBarrier
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Common Training hyperparameter settings for all experiments.}
+\label{tab:hyperparams}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Hyperparameter} 
+& \textbf{Qwen3-1.7B-Base} 
+& \textbf{Qwen3-8B-Base} \\
+
+\midrule
+\multicolumn{3}{c}{\textbf{Training Configuration}} \\
+\midrule
+Training batch size        & 128  & 128 \\
+Mini-batch size            & 64   & 64  \\
+Number of epochs           & 4    & 4 \\
+Total gradient steps       & 1080  & 1080 \\
+Samples per prompt         & 8    & 8  \\
+Max response length        & 4096 & 8192 \\
+
+\midrule
+\multicolumn{3}{c}{\textbf{Sampling Configuration}} \\
+\midrule
+Training temperature       & 1.0  & 1.0 \\
+Training top-$p$           & 1.0  & 1.0 \\
+Validation temperature     & 0.6  & 0.6 \\
+Validation top-$p$         & 0.95  & 0.95 \\
+
+\midrule
+\multicolumn{3}{c}{\textbf{Optimization}} \\
+\midrule
+
+Optimizer                  & AdamW & AdamW \\
+Learning rate              & $1\times10^{-6}$ & $1\times10^{-6}$ \\
+LR warmup steps            & 0    & 0 \\
+LR scheduler               & constant & constant \\
+
+\bottomrule
+\end{tabular}
+\end{table}
+\FloatBarrier
+
+
+In this section, we describe the experimental setup details for the RLVR algorithm with the DBB process (RLVR-DBB) and all baseline methods.
+All training experiments are conducted using the \texttt{verl} framework, and \texttt{Math-Verify} is employed to extract and normalize final answers from model responses.
+Training Qwen3-1.7B-Base is performed using 4$\times$H200 GPUs, while Qwen3-8B-Base is trained using 8$\times$H200 GPUs.
+Due to its substantially higher GPU memory requirements, RePO is trained using 8$\times$H200 GPUs for both model scales.
+
+All training experiments are conducted using the DAPO-Math-17k dataset.
+For training stability, we filter prompts to a maximum length of 1024 tokens.
+In addition, to facilitate analysis, we further restrict the dataset so that its size is an integer multiple of the rollout batch size, which is 128.
+As a result, out of the original 17,391 prompts, 17,280 are used for training.
+
+
+The hyperparameters shared across all training experiments are summarized in Table~\ref{tab:hyperparams}.
+Our experimental setup follows configurations that are most commonly adopted in recent RLVR studies.
+Following DAPO, we remove the KL regularization term during training.
+In addition, under the clip-higher strategy, we use a clipping range of $(\text{clip}_{\text{low}}, \text{clip}_{\text{high}}) = (0.2, 0.28)$ for all methods except RLVR-DBB.
+
+For RLVR-DBB, the importance ratios tend to be larger than those of naive methods.
+As a result, using the same clipping range would cause a substantially larger fraction of meaningful update signals to be clipped.
+To avoid overly aggressive clipping, we therefore adopt a wider clipping range of $(0.98, 0.98)$ specifically for RLVR-DBB.
+
+For RePO, which introduces additional hyperparameters and configuration options, we follow the optimal settings recommended in the original paper.
+Specifically, we set the number of replay samples to 8, use a replay cache size of 16, and adopt the reward-oriented replay strategy.
+
+For both evaluation and validation, we use the sampling parameters specified in Table~\ref{tab:hyperparams}.
+To reduce training overhead, the validation set is restricted to AIME24/25, AMC24, Minerva, and MATH500.
+Evaluation on OlympiadBench and the out-of-distribution benchmarks (MMLU-Pro, GPQA-Diamond, and Big-Bench Hard) is performed only on the best checkpoint selected for each experiment.
+
+
+

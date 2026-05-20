@@ -1,0 +1,121 @@
+
+\input{contents/lambda_table}
+
+\section{Analysis \& Discussion}
+In this section, we provide an in-depth analysis of the training behavior and estimation properties of GRPO with the DBB reward estimator.
+We first examine training dynamics to understand how DBB influences optimization stability, exploration behavior, and reward progression over time (\cref{subsec:train_dynamics}).
+We then conduct ablation studies on the discount factor $\lambda$ to clarify its role in adapting to different learning regimes (\cref{sec:impact_lambda}).
+Next, we empirically analyze the mean squared error (MSE) of DBB relative to point estimation, connecting estimation accuracy to downstream performance (\cref{subsec:anal_mse}).
+Finally, we demonstrate that DBB can be readily integrated into alternative advantage formulations, highlighting its generality beyond GRPO (\cref{subsec:drgpo}).
+
+% We conduct the following analyses to address the following questions: (1) Why does DBB outperform other baselines? (2) Under what conditions can DBB be effective? (3) Does DBB generalize effectively to RLVR algorithms with alternative advantage formulations?
+
+\subsection{Training Dynamics}
+\label{subsec:train_dynamics}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/training_dynamics.pdf}
+    \caption{Training dynamics of naive GRPO and GRPO with the DBB estimator (GRPO-DBB) on Qwen3-1.7B-Base (top) and Qwen3-8B-Base (bottom). GRPO-DBB achieves higher validation Acc@8 and training rewards, while maintaining longer responses with controlled entropy compared to GRPO, indicating more stable exploration during training.}
+    \label{fig:train_dynamics}
+\end{figure*}
+
+Figure~\ref{fig:train_dynamics} illustrates the validation accuracy and training dynamics of GRPO-DBB and GRPO during training.
+For GRPO-DBB, the discounting factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base and $0.75$ for Qwen3-8B-Base.
+For both model scales, GRPO-DBB achieves higher validation accuracy and training rewards than GRPO throughout most of the training process.
+
+Examining the response length over the course of training, we observe that GRPO-DBB consistently produces longer responses than GRPO throughout training.
+In contrast, the entropy under GRPO grows rapidly, indicating increasingly unstable exploration behavior.
+Taken together, these observations suggest that GRPO-DBB attains higher rewards by pruning the breadth of response trajectories while allowing exploration to proceed along longer trajectories, corresponding to depth-wise exploration.
+
+
+\subsection{Ablation Study on $\lambda$}
+\label{sec:impact_lambda}
+
+To examine the effect of the discount factor $\lambda$ in the DBB estimation, we conduct training experiments of GRPO-DBB with $\lambda = 1.0, 0.75, 0.5,$ and $0.25$ for both model scales.
+
+The hyperparameter $\lambda$ controls the extent to which the estimation of the Bernoulli parameter $p_{\tau}$ for a given query at epoch $\tau$ depends on historical rollout statistics, namely $\alpha_{\tau-1}$ and $\beta_{\tau-1}$.
+When the learning dynamics are fast and the discrepancy between $p_{\tau}$ and $p_{\tau-1}$ is large, a smaller $\lambda$ is generally more effective, as it places greater emphasis on recent observations and reduces estimation bias.
+Conversely, when the learning dynamics are slower and more stationary, a larger $\lambda$ tends to yield better performance by incorporating more historical information and thereby reducing estimation variance.
+
+This behavior can be interpreted in conjunction with the training reward dynamics shown in Figure~\ref{fig:train_dynamics}.
+For Qwen3-1.7B-Base, the training reward exhibits sustained changes throughout the training process, indicating continuously evolving estimates of $p_{\tau}$.
+In contrast, for Qwen3-8B-Base, the training reward increases rapidly during the very early stage of training (within approximately the first 0.3 epoch) and remains relatively stationary for the remainder of training.
+As a result, a smaller discounting factor ($\lambda = 0.5$) is more effective for Qwen3-1.7B-Base, while a larger value ($\lambda = 0.75$) better matches the slower and more gradual learning dynamics of Qwen3-8B-Base.
+
+
+\label{sec:mse_analysis}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/mse_combined.pdf}
+    \caption{MSE as a function of the discount factor $\lambda$ and the number of rollouts $N$. The DBB estimator yields lower MSE than the point estimator across a wide range of $\lambda$, and it achieves lower MSE for rollout budgets up to $N=16$ when $\lambda=0.4$.}
+    \label{fig:mse_lambda}
+\end{figure}
+
+\subsection{Analysis of MSE}
+\label{subsec:anal_mse}
+
+To evaluate how accurately the point estimator $\hat{p}_{\tau}^{\mathrm{pt}}$ and the DBB estimator $\hat{p}_{\tau}^{\mathrm{db}}$ approximate the Bernoulli parameter $p_{\tau}$ during training, we conduct an empirical estimation error analysis.
+Since obtaining the exact ground-truth value of $p_{\tau}$ would require infinitely many samples, we instead approximate it using the empirical mean of rewards from a finite number of rollouts.
+
+During GRPO training of Qwen3-1.7B-Base, when a randomly selected 10\% subset of training prompts $\mathcal{Q}_{\tau}$ appears in a rollout batch, we additionally sample 128 responses for each such prompt using the policy at that training step.
+These additional samples are used exclusively for analysis and are not incorporated into training.
+We then define the empirical mean of the resulting rewards as the reference value $\tilde{p}_{\tau}(q)$.
+
+% \begin{equation}
+% \tilde{p}_{\tau}(q)
+% \;\triangleq\;
+% \frac{1}{128}
+% \sum_{i=1}^{128}
+% X_{\tau,i},
+% \label{eq:ptilde}
+% \end{equation}
+
+\vspace{-0.7em}
+\begin{equation}
+\tilde{p}_{\tau}(q)
+\;\triangleq\;
+\frac{1}{128}
+\sum_{i=1}^{128}
+X_{\tau,i},
+\label{eq:ptilde}
+\end{equation}
+\vspace{-0.7em}
+
+\noindent
+where
+\(
+o_{\tau,i} \sim \pi_{\theta_\tau}(\cdot \mid q)
+\)
+and
+\(
+X_{\tau,i} = r(o_{\tau,i}, q).
+\)
+Since training is conducted for a total of four epochs, this procedure yields a sequence of reference values $\{\tilde{p}_{\tau}(q)\}_{\tau=1}^{4}$ for each query.
+
+Using $\tilde{p}_{\tau}(q)$ as a surrogate for the true Bernoulli parameter, we measure the average MSE of the DBB estimator and the point estimator following Equation~\eqref{eq:hb_mse_pseq} and ~\eqref{eq:pt_mse_pseq}, respectively. 
+
+
+\paragraph{Effect of $\lambda$ on MSE}
+\label{subsec:anal_lambda}
+Since the value of the DBB estimator depends on the discount factor $\lambda$, we empirically analyze how the MSE varies as a function of $\lambda$.
+As shown in Figure~\ref{fig:mse_lambda}(a), the MSE attains its minimum at $\lambda = 0.4$, and for most values of $\lambda$—except for $\lambda = 0.95$ and $\lambda = 1.0$—the DBB estimator yields a lower average MSE than the point estimator.
+
+This trend is closely aligned with downstream performance.
+As reported in Table~\ref{tab:lambda}, GRPO-DBB achieves the best performance at $\lambda = 0.5$, while at $\lambda = 1.0$ it performs slightly worse than GRPO with the point estimator.
+These observations mirror the behavior of the MSE across different values of $\lambda$.
+Taken together, the results indicate that more accurate reward distribution estimation is strongly correlated with improved RLVR performance.
+
+\paragraph{Effect of $N$ on MSE}
+We further examine how the MSE varies as the number of rollouts $N$ increases.
+Figure~\ref{tab:lambda}(b) reports the average MSE as a function of $N$ when $\lambda = 0.4$.
+The results show that the DBB estimator consistently outperforms the point estimator for $N$ up to 16.
+This suggests that, in regimes where computational resource constraints necessitate small rollout budgets, the DBB estimator can serve as an effective alternative to point estimation.
+
+\subsection{Evaluation on Alternative Advantage Formulations}
+\label{subsec:drgpo}
+\input{contents/drgpo}
+To examine whether the DBB estimation can be applied to other advantage formulations, we conduct experiments using the advantage term of Dr.GRPO, defined as $A_i = X_i - \mathbb{E}[\hat{p}_\tau]$.
+All experiments are conducted on Qwen3-1.7B-Base with the discounting factor set to $\lambda = 0.5$ for the Dr.GRPO with the DBB estimation (Dr.GRPO-DBB).
+As shown in Table~\ref{tab:drgrpo}, Dr.GRPO-DBB consistently improves performance over the naive Dr.GRPO across all in-distribution benchmarks, yielding an average Acc@8 gain of 1.96 points.
+These results suggest that the DBB estimation is not limited to the advantage term of GRPO, but can be broadly applied to other RLVR algorithms that rely on point estimation, yielding effective and consistent performance gains.

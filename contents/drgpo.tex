@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{5pt}
+\caption{In-distribution evaluation results on Qwen3-1.7B-Base trained with DAPO-MATH-17k.
+We apply the proposed discounted Beta--Bernoulli reward distribution estimation to the advantage term of Dr.GRPO and observe consistent performance improvements.
+$\Delta$ denotes the absolute Acc@8 improvement over naive Dr.GRPO.}
+\label{tab:drgrpo}
+\resizebox{\linewidth}{!}{
+    \begin{tabular}{lcccccc>{\columncolor{AvgCol}}c}
+    \toprule
+    Method & MATH500 & Minerva & AIME24 & AIME25 & AMC24 & Olympiad & Avg. \\
+    \midrule
+    
+    \rowcolor{ModelRow}
+    \multicolumn{8}{c}{\textbf{Qwen3-1.7B-Base} trained with \textbf{DAPO-Math-17k}} \\
+    \midrule
+    Dr.GRPO
+    & 69.00 & 25.14 & 9.17 & 7.92 & 23.89 & 32.78 & 27.98 \\
+    \midrule
+    Dr.GRPO-DBB
+    & \textbf{70.60} & \textbf{26.15} & \textbf{12.08} & \textbf{9.17} & \textbf{28.06} & \textbf{33.59} & \textbf{29.94} \\
+    $\Delta$ w.r.t.\ Dr.GRPO
+    & \textbf{+1.60} & \textbf{+1.01} & \textbf{+2.92} & \textbf{+1.25} & \textbf{+4.17} & \textbf{+0.81} & \textbf{+1.96} \\
+    
+    \bottomrule
+    \end{tabular}
+}
+\end{table}

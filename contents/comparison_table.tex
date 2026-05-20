@@ -1,0 +1,45 @@
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{2.0}   
+\setlength{\tabcolsep}{4pt}         
+
+\caption{Comparison between point estimation and DBB estimation for reward distribution modeling. We denote the Bernoulli distribution by $\mathrm{Bern}(\cdot)$.}
+\label{tab:estimator_comparison}
+\begin{tabular}{l|c|c}
+\toprule
+ & {\small\textbf{Point Estimation}} & {\small\textbf{DBB Estimation}} \\
+\midrule
+
+$X_{\tau,i}$
+& $X_{\tau,i} \sim \mathrm{Bern}(p_\tau)$
+& $X_{\tau,i} \sim \mathrm{Bern}(p_\tau)$ \\
+
+
+$p_\tau$
+& fixed but unknown
+& $p_\tau \sim \mathrm{Beta}(\alpha_\tau,\beta_\tau)$ \\
+
+$\hat{p}_\tau$
+& $\displaystyle \hat{p}_\tau^{\mathrm{pt}} = \frac{1}{N}\sum_{i=1}^N X_{\tau,i}$
+& $\displaystyle \hat{p}_\tau^{\mathrm{db}} = \frac{\alpha_\tau}{\alpha_\tau+\beta_\tau}$ \\
+
+$\widehat{\mathrm{Var}}(X_\tau)$
+& $\displaystyle \frac{N}{N-1}\,\hat{p}_\tau^{\mathrm{pt}}\!\left(1-\hat{p}_\tau^{\mathrm{pt}}\right)$
+& $\displaystyle \hat{p}_\tau^{\mathrm{db}}\!\left(1-\hat{p}_\tau^{\mathrm{db}}\right)$ \\
+
+
+$\mathbb{E}[\hat{p}_\tau]$
+& $p_\tau$
+& $w\mu_{\tau-1} + (1-w)p_\tau$ \\
+
+$\mathrm{Bias}(\hat{p}_\tau)$
+& $0$
+& $w(\mu_{\tau-1} - p_\tau)$ \\
+
+$\mathrm{Var}(\hat{p}_\tau)$
+& $\displaystyle \frac{p_\tau(1-p_\tau)}{N}$
+& $\displaystyle (1-w)^2\frac{p_\tau(1-p_\tau)}{N}$ \\
+
+\bottomrule
+\end{tabular}
+\end{table}
