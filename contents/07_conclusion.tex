@@ -2,7 +2,7 @@
 
 We revisited RLVR from the perspective of reward distribution estimation and identified point estimation under limited rollouts as a key source of sample inefficiency and variance collapse.
 To this end, we proposed Discounted Beta--Bernoulli (DBB) reward estimation for RLVR, which leverages historical reward information for accurate estimation.
-Although biased, the DBB estimator achieves substantially lower variance and mean squared error, theoretically avoids variance collapse, and preserves informative training signals without additional rollouts or replay.
+Although biased, the DBB estimator achieves substantially lower variance and, under mild non-stationarity of rewards, a lower mean squared error than point estimation; it also theoretically avoids variance collapse and preserves informative training signals without additional rollouts or replay.
 Experiments across two model scales demonstrate consistent improvements over baselines on all in-distribution and out-of-distribution benchmarks.
 Our findings highlight reward distribution estimation as a critical yet underexplored component of effective RLVR and suggest that principled estimator design offers a promising direction for improving large-scale reinforcement learning of language models.
 As future work, we plan to design a dynamic discount factor $\lambda$ that adapts across different stages of training.

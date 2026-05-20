@@ -97,8 +97,11 @@ Under the DBB reward model, we estimate the mean and variance of the Bernoulli r
 \begin{equation}
 \widehat{\mathrm{Var}}^{\mathrm{dbb}}(X_{\tau} \mid \alpha_{\tau}, \beta_{\tau})
 =
+\hat{p}_\tau^{\mathrm{dbb}}\bigl(1-\hat{p}_\tau^{\mathrm{dbb}}\bigr)
+=
 \frac{\alpha_\tau\beta_\tau}{(\alpha_\tau + \beta_\tau)^2}.
 \end{equation}
+Since the advantage in Eq.~\eqref{eq:grpo} is computed from the mean and variance of the \emph{reward}, we use the Bernoulli mean and variance evaluated at the posterior mean $\hat{p}_\tau^{\mathrm{dbb}}$. This should not be confused with the variance of the latent probability $p_\tau\sim\mathrm{Beta}(\alpha_\tau,\beta_\tau)$, which is given by $\tfrac{\alpha_\tau\beta_\tau}{(\alpha_\tau+\beta_\tau)^2(\alpha_\tau+\beta_\tau+1)}$, or with the Beta--Bernoulli posterior predictive variance.
 
 To understand the statistical behavior of the DBB estimator, we analyze its expectation and variance:
 \begin{equation}
@@ -127,11 +130,12 @@ These show that the DBB estimator introduces bias through shrinkage toward the h
 To assess the effectiveness of our DBB estimator in predicting the reward distribution, we compute its mean squared error (MSE). To make the estimator's dependence on the underlying reward probabilities $\{p_1, \ldots, p_\tau\}$, we re-express its expectation and variance, originally formulated in terms of the posterior parameters $(\alpha_{\tau-1}, \beta_{\tau-1})$.
 
 Based on the update defined in \cref{eq:param_update_dbb}, posterior parameters can be expressed as
-\[
-\alpha_\tau = \lambda^\tau \alpha_0 + \sum_{k=1}^{\tau} \lambda^{\tau-k} S_k,
-\;
-\beta_\tau = \lambda^\tau \beta_0 + \sum_{k=1}^{\tau} \lambda^{\tau-k} (N - S_k).
-\]
+\begin{equation*}
+\begin{aligned}
+\alpha_\tau &= \lambda^\tau \alpha_0 + \sum_{k=1}^{\tau} \lambda^{\tau-k} S_k, \\
+\beta_\tau  &= \lambda^\tau \beta_0  + \sum_{k=1}^{\tau} \lambda^{\tau-k} (N - S_k).
+\end{aligned}
+\end{equation*}
 For convenience, define the sum of the posterior parameters as $H_\tau$:
 \begin{equation}
 H_\tau = \alpha_\tau + \beta_\tau = \lambda^\tau(\alpha_0+\beta_0) + N\sum_{k=1}^{\tau}\lambda^{\tau-k}.
@@ -153,11 +157,13 @@ where $p_0=\frac{\alpha_0}{\alpha_0+\beta_0}$ is the reward probability of the i
 
 Combining Equations~\eqref{eq:hb_expectation_pseq} and~\eqref{eq:hb_variance_pseq}, the MSE of the DBB estimator under non-stationary rewards is
 \begin{equation}
+\begin{aligned}
 \mathrm{MSE}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right)
-=
-\left(\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right] -p_\tau \right)^2
-+
+&=
+\left(\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right] -p_\tau \right)^2 \\
+&\quad +
 \mathrm{Var}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right).
+\end{aligned}
 \label{eq:hb_mse_pseq}
 \end{equation}
 

@@ -221,7 +221,7 @@ LR scheduler               & constant & constant \\
 \FloatBarrier
 
 
-In this section, we describe the experimental setup details for the RLVR algorithm with the DBB process (RLVR-DBB) and all baseline methods.
+In this section, we describe the experimental setup details for GRPO-DBB (and more generally any RLVR algorithm that applies the DBB process) and all baseline methods.
 All training experiments are conducted using the \texttt{verl} framework, and \texttt{Math-Verify} is employed to extract and normalize final answers from model responses.
 Training Qwen3-1.7B-Base is performed using 4$\times$H200 GPUs, while Qwen3-8B-Base is trained using 8$\times$H200 GPUs.
 Due to its substantially higher GPU memory requirements, RePO is trained using 8$\times$H200 GPUs for both model scales.
@@ -235,18 +235,239 @@ As a result, out of the original 17,391 prompts, 17,280 are used for training.
 The hyperparameters shared across all training experiments are summarized in Table~\ref{tab:hyperparams}.
 Our experimental setup follows configurations that are most commonly adopted in recent RLVR studies.
 Following DAPO, we remove the KL regularization term during training.
-In addition, under the clip-higher strategy, we use a clipping range of $(\text{clip}_{\text{low}}, \text{clip}_{\text{high}}) = (0.2, 0.28)$ for all methods except RLVR-DBB.
+Throughout this paper we use PPO clipping in its asymmetric ``clip-higher'' form:
+the surrogate ratio $w_{i,t}(\theta)$ is clipped to the interval $[\,1-\epsilon_{\mathrm{low}},\,1+\epsilon_{\mathrm{high}}\,]$, and we write the chosen pair as $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})$.
+For all baselines (GRPO, RePO, GRESO, DAPO, Dr.GRPO), we use $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$, following DAPO.
+For GRPO-DBB and Dr.GRPO-DBB, the importance ratios tend to be larger than those of naive methods because removing GRPO's zero-sum normalization yields advantages with a larger dynamic range; under $(0.2,0.28)$ this leads to $2$--$3\times$ higher clip fractions and excessive suppression of meaningful training signals, which we analyze in detail in Appendix~\ref{ap:clipping}.
+To avoid overly aggressive clipping, we therefore adopt a wider symmetric clipping range of $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.98,0.98)$ specifically for GRPO-DBB (and Dr.GRPO-DBB).
+We emphasize that the wider clip range \emph{permits} larger updates but does not by itself induce them: as shown in Appendix~\ref{ap:clipping}, GRPO under the same $(0.98,0.98)$ range exhibits similar or even smaller gradient norms and shows no improvement in policy gradient loss, indicating that the performance gains of GRPO-DBB stem from the estimator rather than from larger update steps.
 
-For RLVR-DBB, the importance ratios tend to be larger than those of naive methods.
-As a result, using the same clipping range would cause a substantially larger fraction of meaningful update signals to be clipped.
-To avoid overly aggressive clipping, we therefore adopt a wider clipping range of $(0.98, 0.98)$ specifically for RLVR-DBB.
-
+For GRESO, we follow the original implementation and use the reported best probabilistic-filtering thresholds; for DAPO we use the dynamic-sampling configuration recommended in the original paper, retaining the same total number of rollouts as the other methods.
 For RePO, which introduces additional hyperparameters and configuration options, we follow the optimal settings recommended in the original paper.
 Specifically, we set the number of replay samples to 8, use a replay cache size of 16, and adopt the reward-oriented replay strategy.
 
 For both evaluation and validation, we use the sampling parameters specified in Table~\ref{tab:hyperparams}.
 To reduce training overhead, the validation set is restricted to AIME24/25, AMC24, Minerva, and MATH500.
 Evaluation on OlympiadBench and the out-of-distribution benchmarks (MMLU-Pro, GPQA-Diamond, and Big-Bench Hard) is performed only on the best checkpoint selected for each experiment.
+For statistical significance, we additionally perform four independent evaluation runs per method by varying the evaluation seed; each cell in Table~\ref{tab:main_results} reports the mean and standard deviation across the four runs, and $p$-values are obtained from one-sided paired $t$-tests over per-prompt accuracies.
 
 
+\section{Isolating the Effect of the Clipping Range}
+\label{ap:clipping}
+
+We further investigate whether the performance gains of GRPO-DBB stem from the DBB estimator itself or from the wider clipping range $(0.98,0.98)$ used for it.
+
+\paragraph{Why GRPO-DBB requires a wider clip range.}
+Because the DBB estimator removes GRPO's zero-sum advantage normalization, the magnitude of advantages produced by DBB has a larger dynamic range (except in the degenerate zero-variance case): the same per-token gradients are scaled by a larger factor, leading to larger importance ratios.
+Figure~\ref{fig:clipping}(c) and (d) confirm this empirically: GRPO-DBB exhibits larger gradient norms and larger policy-gradient losses than GRPO regardless of the clip range, indicating that these effects are \emph{intrinsic to the estimator}, not artifacts of the clip range.
+
+\paragraph{Controls.}
+We train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$ and compare four diagnostics in Figure~\ref{fig:clipping}: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
+
+Under the standard $(0.2,0.28)$ range, GRPO-DBB suffers a $2$--$3\times$ higher clip fraction than GRPO (Figure~\ref{fig:clipping}(b)), which suppresses a substantial portion of meaningful training signal and noticeably degrades Acc@8 (Figure~\ref{fig:clipping}(a)).
+Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected gains and outperforms GRPO, showing that the improvements are not merely a consequence of taking larger gradient steps.
+Critically, GRPO under the same wider $(0.98,0.98)$ range shows similar or even smaller gradient norms and no improvement in policy gradient loss compared to GRPO under $(0.2,0.28)$.
+This rules out the hypothesis that a wider clip range mechanically improves performance.
+Accordingly, in all main-table experiments we report each method with the best clipping configuration for that method.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure4_clipping.pdf}
+    \caption{Training dynamics of Qwen3-1.7B-Base with GRPO and GRPO-DBB under clipping ranges $(0.2,0.28)$ and $(0.98,0.98)$. From left to right: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss. GRPO-DBB suffers excessive clipping under the standard range; once the range is widened, it recovers strong performance. GRPO under the wider range shows no improvement, confirming that the gains of GRPO-DBB are due to the DBB estimator rather than the clip range.}
+    \label{fig:clipping}
+\end{figure}
+
+
+\section{Mean@8 and Best@8 Validation Curves}
+\label{ap:best_at_8}
+
+To further characterize the exploration behavior of GRPO-DBB, we plot both Mean@8 (= Acc@8) and Best@8 on the validation set throughout training for both model scales in Figure~\ref{fig:best8}.
+For Qwen3-1.7B-Base, GRPO-DBB attains higher Best@8 than GRPO for most of training.
+For Qwen3-8B-Base, GRPO temporarily achieves a higher Best@8 during the middle stage but is eventually overtaken by GRPO-DBB in the final stage.
+These results indicate that the lower entropy of GRPO-DBB (Figure~\ref{fig:train_dynamics}) does not compromise but in fact improves Best@8 in the long run.
+
+To quantify this, we additionally evaluate the best checkpoint of each method on the six in-distribution benchmarks with four independent evaluation seeds (i.e., 32 responses per prompt).
+GRPO attains Best@8 scores of $61.75\pm0.92$ (8B) and $39.79\pm0.26$ (1.7B), while GRPO-DBB attains $63.61\pm1.16$ (8B) and $43.73\pm0.43$ (1.7B).
+The Best@8 improvements of GRPO-DBB are well outside the standard deviations, indicating that the gains are statistically meaningful and that the sharper exploration of GRPO-DBB preserves the diversity of useful response trajectories.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure5_mean8_best8.pdf}
+    \caption{Validation performance of Qwen3-1.7B-Base (top) and Qwen3-8B-Base (bottom) trained with GRPO and GRPO-DBB. The left column shows Mean@8 (= Acc@8) and the right column shows Best@8 on the validation set. Despite producing lower entropy during training, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales.}
+    \label{fig:best8}
+\end{figure}
+
+
+\section{Comparison with Per-Prompt EMA and Laplace Smoothing}
+\label{ap:ema_laplace}
+
+A natural question is whether simpler shrinkage estimators could achieve similar gains as the DBB estimator. To address this, we additionally derive and evaluate the per-prompt exponential moving average (EMA) and per-prompt Laplace smoothing estimators of the success probability $p_\tau$.
+
+\paragraph{Per-prompt EMA estimator.}
+Let $\hat{p}_\tau^{(\mathrm{EMA})}$ denote the EMA of the per-prompt empirical mean with decay rate $\lambda$:
+\begin{equation}
+\hat{p}_\tau^{(\mathrm{EMA})}
+=
+\frac{\sum_{k=1}^{\tau}\lambda^{\tau-k}\,\hat{p}_k^{\mathrm{pt}}}{\sum_{k=1}^{\tau}\lambda^{\tau-k}},
+\qquad
+\hat{p}_k^{\mathrm{pt}}=\frac{S_k}{N}.
+\end{equation}
+Conditional on the sequence $p_{1:\tau}$ and using $S_k\sim\mathrm{Binomial}(N,p_k)$, its conditional MSE is
+\begin{equation}
+\mathrm{MSE}\!\left(\hat{p}_\tau^{(\mathrm{EMA})}\mid p_{1:\tau}\right)
+=
+\Bigg(\sum_{k=1}^{\tau} \tilde{c}_k\,(p_k-p_\tau)\Bigg)^{2}
++
+\sum_{k=1}^{\tau}\tilde{c}_k^{\,2}\,\frac{p_k(1-p_k)}{N},
+\end{equation}
+where $\tilde{c}_k=\lambda^{\tau-k}/\sum_{j=1}^{\tau}\lambda^{\tau-j}$.
+
+\paragraph{Per-prompt Laplace smoothing.}
+With a pseudocount $a$ split symmetrically across the two outcomes, the Laplace-smoothed estimator is
+\begin{equation}
+\hat{p}_\tau^{(\mathrm{Lap})}
+=
+\frac{S_\tau + a}{N + 2a},
+\end{equation}
+which has conditional MSE
+\begin{equation}
+\mathrm{MSE}\!\left(\hat{p}_\tau^{(\mathrm{Lap})}\mid p_\tau\right)
+=
+\Bigg(\frac{a\,(1-2p_\tau)}{N+2a}\Bigg)^{2}
++
+\frac{N\,p_\tau(1-p_\tau)}{(N+2a)^2}.
+\end{equation}
+We parameterize the pseudocount as $a=\lambda\cdot a_{\max}$ to keep a comparable $\lambda$ sweep range against EMA and DBB.
+
+\paragraph{Empirical comparison.}
+Following the protocol of Section~\ref{sec:mse_analysis} (Qwen3-1.7B-Base, 128-rollout reference), we sweep $\lambda$ for each estimator.
+As shown in Figure~\ref{fig:ema_laplace}, GRPO-DBB achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
+EMA attains its best MSE of $0.0086$ at $\lambda=0.3$ ($+2.67\%$ over DBB) and degrades rapidly as $\lambda$ grows, indicating high sensitivity to $\lambda$.
+Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$ ($+21.71\%$ over DBB) and also outperforms point estimation only within a narrow $\lambda$ range.
+Overall, DBB is the most favorable option among these light-weight shrinkage estimators: it attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on point estimation.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.85\columnwidth]{figures/figure6_ema_laplace.pdf}
+    \caption{MSE versus $\lambda$ for per-prompt exponential moving average (EMA), per-prompt Laplace smoothing, the GRPO point estimator (horizontal dashed line), and GRPO-DBB. DBB attains the lowest minimum MSE at $\lambda=0.4$ and improves on the point estimator over a broader range of $\lambda$ than EMA or Laplace.}
+    \label{fig:ema_laplace}
+\end{figure}
+
+
+\section{Sensitivity to the Prior Hyperparameters $(\alpha_0,\beta_0)$}
+\label{ap:prior_sensitivity}
+
+We additionally measure the MSE of the DBB estimator with respect to the prior hyperparameters $(\alpha_0,\beta_0)$ and the discount factor $\lambda$ under the same setup as Section~\ref{sec:mse_analysis}.
+
+Figure~\ref{fig:prior_sensitivity}(a) shows a heatmap of $\min_\lambda \mathrm{MSE}(\hat{p}_\tau^{\mathrm{dbb}}\mid p_{1:\tau};\alpha_0,\beta_0)$ over $(\alpha_0,\beta_0)$.
+For most reasonable prior choices, the achievable MSE remains close to the optimum.
+Performance degrades only when $\alpha_0+\beta_0$ is large, since a strong prior diminishes the influence of the $N$ on-policy rewards: the estimator becomes more sensitive to $\lambda$, which can amplify bias and inflate MSE (Figure~\ref{fig:prior_sensitivity}(b)).
+
+In practice we initialize the Beta posterior with the symmetric uninformative prior $(\alpha_0,\beta_0)=(1,1)$.
+This choice is both reasonable and robust: in the absence of prior knowledge about $p_\tau$, symmetric initialization avoids injecting bias toward either outcome, while keeping the prior mass small relative to typical batch sizes.
+As Figure~\ref{fig:prior_sensitivity}(b) shows, $(1,1)$ achieves a relatively low MSE across a wide range of $\lambda$ and a competitive minimum.
+Overall, although MSE is sensitive to $(\alpha_0,\beta_0)$ and to the corresponding $\lambda$, this sensitivity is not a practical concern as long as pathological prior choices are avoided.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/figure7_alpah_beta.pdf}
+    \caption{(a) Heatmap of $\min_\lambda \mathrm{MSE}$ of the DBB estimator over $(\alpha_0,\beta_0)$. (b) MSE versus $\lambda$ for selected priors. The default symmetric prior $(\alpha_0,\beta_0)=(1,1)$ is competitive with the best prior and robust over a wide range of $\lambda$.}
+    \label{fig:prior_sensitivity}
+\end{figure}
+
+
+\section{Hierarchical / Empirical-Bayes Prior}
+\label{ap:emp_bayes}
+
+We also consider an empirical Bayes (EB) variant of DBB as a representative way to introduce a hierarchical / shared prior across prompts.
+The shared Beta hyperparameters $(\alpha_{\mathrm{EB}}(s),\beta_{\mathrm{EB}}(s))$ are estimated online via method-of-moments from the population of per-prompt posteriors at step $s$.
+For a given prompt with $N$ on-policy rewards summing to $S_\tau$, the EB estimator is
+\begin{equation}
+\hat{p}^{(\mathrm{EB})}_\tau
+=
+\frac{S_\tau + \hat{\alpha}_{\mathrm{EB}}(s)}{N + \hat{\alpha}_{\mathrm{EB}}(s) + \hat{\beta}_{\mathrm{EB}}(s)}.
+\end{equation}
+This estimator does not require a manually tuned discount factor: the shared prior already provides cross-prompt shrinkage.
+
+Following the same protocol as Section~\ref{sec:mse_analysis}, Figure~\ref{fig:emp_bayes} compares the MSE of the EB estimator, the point estimator (GRPO), and the DBB estimator over $\lambda$.
+EB sits between point estimation and the optimum of DBB.
+This indicates a trade-off: EB avoids manual $\lambda$ tuning at the cost of a higher minimum MSE, while DBB attains a strictly lower MSE when $\lambda$ is chosen reasonably.
+Combining a hierarchical prior with the discounted update of DBB is a natural direction for future work.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.85\columnwidth]{figures/figure8_hierarchy.pdf}
+    \caption{MSE versus $\lambda$ for the empirical Bayes (EB) estimator (online method-of-moments), the GRPO point estimator (dashed), and GRPO-DBB. EB improves over the point estimator without per-prompt tuning, but DBB attains a lower minimum MSE.}
+    \label{fig:emp_bayes}
+\end{figure}
+
+
+\section{Discount-Factor Search on Qwen3-0.6B-Base}
+\label{ap:lambda_06B}
+
+To further investigate how the optimal discount factor $\lambda$ depends on model scale, we conduct an additional $\lambda$ search on a smaller backbone, Qwen3-0.6B-Base, trained with DAPO-Math-17k.
+Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks for $\lambda\in\{0.25,0.5,0.75,1.0\}$.
+
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{5pt}
+\caption{Effect of the discount factor $\lambda$ of GRPO-DBB on in-distribution Acc@8 performance for Qwen3-0.6B-Base trained on DAPO-Math-17k. The best average performance is attained at $\lambda=0.25$.}
+\label{tab:lambda_06B}
+\resizebox{\linewidth}{!}{
+    \begin{tabular}{lccccc>{\columncolor{AvgCol}}c}
+    \toprule
+    Method & MATH500 & MinervaMath & AIME24 & AIME25 & AMC24 & Avg. \\
+    \midrule
+    \rowcolor{ModelRow}
+    \multicolumn{7}{c}{\textbf{Qwen3-0.6B-Base} trained with \textbf{DAPO-Math-17k}} \\
+    \midrule
+    $\lambda=1.0$  & 47.12 & 14.25 & 2.92 & 0.00 & 10.83 & 15.02 \\
+    $\lambda=0.75$ & 48.05 & 14.52 & 2.08 & 0.42 & 10.28 & 15.07 \\
+    $\lambda=0.5$  & 47.95 & 14.11 & 2.08 & 1.25 & 11.94 & 15.47 \\
+    $\lambda=0.25$ & 49.98 & 14.15 & 3.33 & 1.67 & 8.61  & \textbf{15.55} \\
+    \bottomrule
+    \end{tabular}
+}
+\end{table}
+
+The optimal $\lambda$ for the 0.6B model is $0.25$, smaller than the optimal values $\lambda^\star=0.5$ for 1.7B and $\lambda^\star=0.75$ for 8B.
+Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$ because their reward distribution shifts more rapidly during training, making the bias of larger $\lambda$ more harmful than the variance reduction is helpful.}
+We extrapolate this rule cautiously: for $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point, while harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
+
+
+\section{Extension to Continuous and Dense Process Rewards}
+\label{ap:continuous_reward}
+
+Our current formulation deliberately focuses on the standard RLVR setting with binary verifiable outcome rewards, where the Bernoulli likelihood and Beta posterior provide a clean and analytically tractable foundation for studying reward estimation under limited rollouts.
+This choice isolates the core contribution of the paper: reframing advantage computation as a reward-distribution estimation problem and showing that discounted Bayesian shrinkage substantially reduces variance and improves MSE in the non-stationary on-policy regime.
+
+That said, the broader Bayesian perspective is not limited to Beta--Bernoulli rewards.
+The key idea is to maintain \emph{discounted sufficient statistics} for a non-stationary reward distribution and to use the resulting posterior mean and uncertainty for more stable advantage estimation.
+For bounded continuous rewards in $[0,1]$, one could replace the Beta--Bernoulli pair with a Beta likelihood (e.g., Beta--Beta) or another appropriate bounded model.
+For real-valued dense rewards, a Gaussian likelihood with discounted conjugate updates yields an analogous closed-form posterior over the reward mean and variance, again with the same discount-factor knob $\lambda$ controlling the bias--variance trade-off.
+Process-level rewards can be incorporated by applying the same discounted posterior estimation at the step- or segment-level, rather than only at the final outcome.
+We leave the empirical study of these extensions to future work, and view DBB as one instance of a broader \emph{discounted Bayesian reward-estimation} framework for sample-efficient RLVR.
+
+
+\section{Limitations}
+\label{ap:limitations}
+
+We discuss several limitations of our study that we have not been able to fully address in this paper.
+
+\paragraph{Sensitivity to the discount factor $\lambda$.}
+The DBB estimator introduces an additional hyperparameter, the discount factor $\lambda$, whose optimal value varies with model scale and reward dynamics (Section~\ref{sec:impact_lambda}, Appendix~\ref{ap:lambda_06B}).
+Although GRPO-DBB outperforms GRPO across nearly all reasonable $\lambda$ values, a separate search may still be required when applying DBB to a new model scale or training corpus.
+We mitigated this with a coarse rule of thumb (smaller models favor smaller $\lambda$) and explored a non-tuned empirical-Bayes variant in Appendix~\ref{ap:emp_bayes}, but a fully adaptive $\lambda$ schedule is left to future work.
+
+\paragraph{Scale of evaluation.}
+Our empirical validation is restricted to Qwen3-Base models at $0.6$B, $1.7$B, and $8$B scales due to computational constraints.
+While we provide an analytical interpretation of why DBB should remain beneficial at larger scales, an empirical study at $30$B$+$ parameters would be needed to fully confirm this.
+
+\paragraph{Binary outcome rewards.}
+The Beta--Bernoulli formulation is tailored to the binary verifiable reward typical of RLVR for mathematical reasoning.
+Extending DBB to continuous or process-level rewards (Appendix~\ref{ap:continuous_reward}) requires a different likelihood model and a corresponding empirical study, which we leave to future work.
+
+\paragraph{Clip-range coupling.}
+Because the DBB estimator removes the zero-sum advantage normalization of GRPO, its importance ratios are larger and a wider PPO clip range is needed to fully realize the gains (Appendix~\ref{ap:clipping}).
+We empirically isolated the estimator's effect from the clip-range effect, but ideally an estimator whose advantages match the natural dynamic range of $(0.2,0.28)$ would be more drop-in for existing pipelines.
 

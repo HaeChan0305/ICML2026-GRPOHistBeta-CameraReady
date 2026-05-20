@@ -28,6 +28,14 @@ Examining the response length over the course of training, we observe that GRPO-
 In contrast, the entropy under GRPO grows rapidly, indicating increasingly unstable exploration behavior.
 Taken together, these observations suggest that GRPO-DBB attains higher rewards by pruning the breadth of response trajectories while allowing exploration to proceed along longer trajectories, corresponding to depth-wise exploration.
 
+\paragraph{Why does DBB shrink entropy and elongate responses?}
+A decrease in entropy indicates that some token trajectories become less probable and are effectively pruned from the policy's token tree.
+This pruning is particularly pronounced for prompts where all sampled rewards within a group are zero: under GRPO the group-relative advantage collapses to zero and yields no training signal, whereas DBB still produces a non-zero (negative) advantage that rapidly suppresses incorrect trajectories.
+We interpret this stronger pruning of zero-variance prompts as a key mechanism underlying the gains of GRPO-DBB.
+The increase in response length follows naturally: to obtain a reward, the model can explore either (i) breadth-wise by diversifying trajectories or (ii) depth-wise by extending them.
+Stronger breadth-wise pruning under DBB shifts exploration toward the depth-wise mode, producing significantly longer responses.
+Importantly, this lower entropy does not compromise sample diversity at evaluation time: as shown in Appendix~\ref{ap:best_at_8}, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales, indicating that meaningful exploratory paths are preserved even as exploration is sharpened.
+
 
 \subsection{Ablation Study on $\lambda$}
 \label{sec:impact_lambda}
@@ -42,6 +50,10 @@ This behavior can be interpreted in conjunction with the training reward dynamic
 For Qwen3-1.7B-Base, the training reward exhibits sustained changes throughout the training process, indicating continuously evolving estimates of $p_{\tau}$.
 In contrast, for Qwen3-8B-Base, the training reward increases rapidly during the very early stage of training (within approximately the first 0.3 epoch) and remains relatively stationary for the remainder of training.
 As a result, a smaller discounting factor ($\lambda = 0.5$) is more effective for Qwen3-1.7B-Base, while a larger value ($\lambda = 0.75$) better matches the slower and more gradual learning dynamics of Qwen3-8B-Base.
+More generally, this behavior reflects the bias--variance trade-off of the DBB estimator: as $\lambda$ increases, variance decreases but bias grows when the reward distribution shifts substantially between epochs.
+With weaker models or more challenging datasets, such shifts tend to be larger, making a smaller $\lambda$ preferable; conversely, once the model fits the training distribution well, the reward distribution becomes nearly stationary and bounded, so a larger $\lambda$ further reduces MSE by trading off little bias for much variance reduction.
+To corroborate this trend, we additionally conduct a $\lambda$ search on Qwen3-0.6B-Base in Appendix~\ref{ap:lambda_06B}, where $\lambda=0.25$ attains the best performance—consistent with the rule of thumb that \emph{smaller models tend to favor smaller $\lambda$}.
+Based on this observation, we cautiously suggest that for 30B+ models trained on datasets of similar difficulty to DAPO-Math-17k, $\lambda$ close to $1$ may be a reasonable starting point, while harder datasets are likely to benefit from a smaller $\lambda$.
 
 
 \label{sec:mse_analysis}
@@ -55,7 +67,7 @@ As a result, a smaller discounting factor ($\lambda = 0.5$) is more effective fo
 \subsection{Analysis of MSE}
 \label{subsec:anal_mse}
 
-To evaluate how accurately the point estimator $\hat{p}_{\tau}^{\mathrm{pt}}$ and the DBB estimator $\hat{p}_{\tau}^{\mathrm{db}}$ approximate the Bernoulli parameter $p_{\tau}$ during training, we conduct an empirical estimation error analysis.
+To evaluate how accurately the point estimator $\hat{p}_{\tau}^{\mathrm{pt}}$ and the DBB estimator $\hat{p}_{\tau}^{\mathrm{dbb}}$ approximate the Bernoulli parameter $p_{\tau}$ during training, we conduct an empirical estimation error analysis.
 Since obtaining the exact ground-truth value of $p_{\tau}$ would require infinitely many samples, we instead approximate it using the empirical mean of rewards from a finite number of rollouts.
 
 During GRPO training of Qwen3-1.7B-Base, when a randomly selected 10\% subset of training prompts $\mathcal{Q}_{\tau}$ appears in a rollout batch, we additionally sample 128 responses for each such prompt using the policy at that training step.
