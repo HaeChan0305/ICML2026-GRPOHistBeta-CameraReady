@@ -254,22 +254,19 @@ For statistical significance, we additionally perform four independent evaluatio
 \label{ap:clipping}
 
 We further investigate whether the performance gains of GRPO-DBB stem from the DBB estimator itself or from the wider clipping range $(0.98,0.98)$ used for it.
+To this end, we train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$.
+Figure~\ref{fig:clipping} compares four diagnostics across the four resulting runs: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
 
-\paragraph{Why GRPO-DBB requires a wider clip range.}
+We first explain why GRPO-DBB requires a wider clip range to perform well.
 The DBB estimator removes GRPO's zero-sum advantage normalization.
 As a result, the advantages produced by DBB have a larger dynamic range than those of GRPO, except in the degenerate zero-variance case.
 Larger advantages scale the same per-token gradients by a larger factor, leading to larger importance ratios.
 Figure~\ref{fig:clipping}(c) and (d) confirm this empirically: GRPO-DBB exhibits larger gradient norms and larger policy-gradient losses than GRPO regardless of the clip range.
 These effects are therefore \emph{intrinsic to the estimator}, not artifacts of the clip range.
 
-\paragraph{Controls.}
-We train GRPO and GRPO-DBB on Qwen3-1.7B-Base under both $(\epsilon_{\mathrm{low}},\epsilon_{\mathrm{high}})=(0.2,0.28)$ and $(0.98,0.98)$.
-Figure~\ref{fig:clipping} compares four diagnostics: (a) validation Acc@8, (b) policy-gradient clip fraction, (c) gradient norm, and (d) policy-gradient loss.
-
-Under the standard $(0.2,0.28)$ range, GRPO-DBB suffers a $2$--$3\times$ higher clip fraction than GRPO (Figure~\ref{fig:clipping}(b)).
+A direct consequence is that, under the standard $(0.2,0.28)$ range, GRPO-DBB suffers a $2$--$3\times$ higher clip fraction than GRPO (Figure~\ref{fig:clipping}(b)).
 This suppresses a substantial portion of meaningful training signal and noticeably degrades Acc@8 (Figure~\ref{fig:clipping}(a)).
-Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected gains and outperforms GRPO.
-This already shows that the improvements are not merely a consequence of taking larger gradient steps.
+Once the clip range is widened to $(0.98,0.98)$, GRPO-DBB recovers its expected gains and outperforms GRPO, which already shows that the improvements are not merely a consequence of taking larger gradient steps.
 Critically, GRPO under the same wider $(0.98,0.98)$ range shows similar or even smaller gradient norms and no improvement in policy gradient loss compared to GRPO under $(0.2,0.28)$.
 This rules out the hypothesis that a wider clip range mechanically improves performance.
 Accordingly, in all main-table experiments we report each method with its own best clipping configuration.
