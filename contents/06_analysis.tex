@@ -132,6 +132,10 @@ Figure~\ref{tab:lambda}(b) reports the average MSE as a function of $N$ when $\l
 The results show that the DBB estimator consistently outperforms the point estimator for $N$ up to 16.
 This suggests that, in regimes where computational resource constraints necessitate small rollout budgets, the DBB estimator can serve as an effective alternative to point estimation.
 
+\paragraph{Comparison with simpler shrinkage estimators}
+We further benchmark DBB against per-prompt exponential moving average (EMA) and per-prompt Laplace smoothing as simpler shrinkage baselines.
+As detailed in Appendix~\ref{ap:ema_laplace}, DBB attains the lowest minimum MSE and improves on the point estimator over a broader $\lambda$ range than either alternative, supporting our choice of the DBB estimator over light-weight shrinkage alternatives.
+
 \subsection{Evaluation on Alternative Advantage Formulations}
 \label{subsec:drgpo}
 \input{contents/drgpo}

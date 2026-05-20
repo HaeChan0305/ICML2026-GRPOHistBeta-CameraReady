@@ -6,6 +6,7 @@ Although biased, the DBB estimator achieves substantially lower variance and, un
 Experiments across two model scales demonstrate consistent improvements over baselines on all in-distribution and out-of-distribution benchmarks.
 Our findings highlight reward distribution estimation as a critical yet underexplored component of effective RLVR and suggest that principled estimator design offers a promising direction for improving large-scale reinforcement learning of language models.
 As future work, we plan to design a dynamic discount factor $\lambda$ that adapts across different stages of training.
+Another promising direction is to share Beta hyperparameters across prompts via online empirical Bayes (Appendix~\ref{ap:emp_bayes}), which avoids per-prompt $\lambda$ tuning at the cost of a higher minimum MSE; combining the hierarchical prior with the discounted update of DBB may further reduce this gap.
 We also view DBB as one instance of a broader discounted Bayesian reward-estimation framework.
 A natural next step is to pair the discounted update with other likelihoods (e.g., a discounted Gaussian) to handle continuous or dense process rewards.
 
