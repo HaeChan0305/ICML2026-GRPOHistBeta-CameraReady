@@ -431,19 +431,36 @@ It attains the lowest minimum MSE and maintains a broader $\lambda$ range over w
 \section{Hierarchical / Empirical-Bayes Prior}
 \label{ap:emp_bayes}
 
-We also consider an empirical Bayes (EB) variant of DBB as a representative way to introduce a hierarchical / shared prior across prompts.
-The shared Beta hyperparameters $(\alpha_{\mathrm{EB}}(s),\beta_{\mathrm{EB}}(s))$ are estimated online via method-of-moments from the population of per-prompt posteriors at step $s$.
-For a given prompt with $N$ on-policy rewards summing to $S_\tau$, the EB estimator is
+We also consider Empirical Bayes (EB) as a representative approach for introducing a hierarchical / shared prior across prompts.
+The hyperparameters of the shared Beta prior, $\alpha_{\mathrm{EB}}$ and $\beta_{\mathrm{EB}}$, are estimated online via method-of-moments, yielding $\hat{\alpha}_{\mathrm{EB}}(s)$ and $\hat{\beta}_{\mathrm{EB}}(s)$ at online step $s$.
+For a given prompt with $N$ on-policy rewards summing to $S_\tau$ (so that the point estimate is $\hat{p}_\tau^{\,\mathrm{pt}} = S_\tau / N$), the EB estimator can be written as
 \begin{equation}
-\hat{p}^{(\mathrm{EB})}_\tau
+\hat{p}_\tau^{\,\mathrm{EB}}
 =
-\frac{S_\tau + \hat{\alpha}_{\mathrm{EB}}(s)}{N + \hat{\alpha}_{\mathrm{EB}}(s) + \hat{\beta}_{\mathrm{EB}}(s)}.
+\frac{N\,\hat{p}_\tau^{\,\mathrm{pt}} + \hat{\alpha}_{\mathrm{EB}}(s)}
+{N + \hat{\alpha}_{\mathrm{EB}}(s) + \hat{\beta}_{\mathrm{EB}}(s)}.
 \end{equation}
-This estimator does not require a manually tuned discount factor: the shared prior already provides cross-prompt shrinkage.
+Let
+\begin{equation}
+\nu_{\mathrm{EB}}(s)
+=
+\hat{\alpha}_{\mathrm{EB}}(s) + \hat{\beta}_{\mathrm{EB}}(s),
+\qquad
+m_{\mathrm{EB}}(s)
+=
+\hat{\alpha}_{\mathrm{EB}}(s) / \nu_{\mathrm{EB}}(s),
+\end{equation}
+denote the effective prior strength and the shared prior mean, respectively.
+Treating $(\hat{\alpha}_{\mathrm{EB}}(s),\hat{\beta}_{\mathrm{EB}}(s))$ as deterministic at step $s$ and using $S_\tau \sim \mathrm{Binomial}(N, p_\tau)$, the conditional MSE of the EB estimator can be expressed as
+\begin{equation}
+\mathrm{MSE}\!\left(\hat{p}_\tau^{\,\mathrm{EB}}\mid p_\tau\right)
+=
+\frac{\nu_{\mathrm{EB}}^{\,2}\,(m_{\mathrm{EB}} - p_\tau)^{2} + N\,p_\tau(1-p_\tau)}{(N + \nu_{\mathrm{EB}})^{2}}.
+\end{equation}
 
-Following the same protocol as Section~\ref{sec:mse_analysis}, Figure~\ref{fig:emp_bayes} compares the MSE of the EB estimator, the point estimator (GRPO), and the DBB estimator over $\lambda$.
-EB sits between point estimation and the optimum of DBB.
-This indicates a trade-off: EB avoids manual $\lambda$ tuning at the cost of a higher minimum MSE, while DBB attains a strictly lower MSE when $\lambda$ is chosen reasonably.
+EB has the advantage of not requiring manual hyperparameter tuning, since the shared prior is estimated directly from the population of per-prompt posteriors.
+However, its minimum achievable MSE is higher than that of GRPO-DBB (Figure~\ref{fig:emp_bayes}).
+This suggests a trade-off between robustness (i.e., reduced dependence on $\lambda$) and optimal performance.
 Combining a hierarchical prior with the discounted update of DBB is a natural direction for future work.
 
 \begin{figure}[t]
