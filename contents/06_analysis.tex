@@ -141,6 +141,6 @@ Appendix~\ref{ap:emp_bayes} further shows that EB, while sidestepping per-prompt
 \label{subsec:drgpo}
 \input{contents/drgpo}
 To examine whether the DBB estimation can be applied to other advantage formulations, we conduct experiments using the advantage term of Dr.GRPO, defined as $A_i = X_i - \mathbb{E}[\hat{p}_\tau]$.
-All experiments are conducted on Qwen3-1.7B-Base with the discounting factor set to $\lambda = 0.5$ for the Dr.GRPO with the DBB estimation (Dr.GRPO-DBB).
+All experiments are conducted on Qwen3-1.7B-Base with the discount factor set to $\lambda = 0.5$ for the Dr.GRPO with the DBB estimation (Dr.GRPO-DBB).
 As shown in Table~\ref{tab:drgrpo}, Dr.GRPO-DBB consistently improves performance over the naive Dr.GRPO across all in-distribution benchmarks, yielding an average Acc@8 gain of 1.96 points.
 These results suggest that the DBB estimation is not limited to the advantage term of GRPO, but can be broadly applied to other RLVR algorithms that rely on point estimation, yielding effective and consistent performance gains.
