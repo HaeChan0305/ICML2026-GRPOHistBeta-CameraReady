@@ -153,11 +153,13 @@ where $p_0=\frac{\alpha_0}{\alpha_0+\beta_0}$ is the reward probability of the i
 
 Combining Equations~\eqref{eq:hb_expectation_pseq} and~\eqref{eq:hb_variance_pseq}, the MSE of the DBB estimator under non-stationary rewards is
 \begin{equation}
+\begin{split}
 \mathrm{MSE}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right)
-=
-\left(\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right] -p_\tau \right)^2
-+
+&=
+\left(\mathbb{E}\!\left[\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right] - p_\tau \right)^2 \\
+&\quad+
 \mathrm{Var}\!\left(\hat{p}_\tau^{\mathrm{dbb}} \mid p_{1:\tau} \right).
+\end{split}
 \label{eq:hb_mse_pseq}
 \end{equation}
 
