@@ -24,21 +24,12 @@ Figure~\ref{fig:train_dynamics} illustrates the validation accuracy and training
 For GRPO-DBB, the discount factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base and $0.75$ for Qwen3-8B-Base.
 For both model scales, GRPO-DBB achieves higher validation accuracy and training rewards than GRPO throughout most of the training process.
 
-Examining the response length over the course of training, we observe that GRPO-DBB consistently produces longer responses than GRPO throughout training.
-In contrast, the entropy under GRPO grows rapidly, indicating increasingly unstable exploration behavior.
-Taken together, these observations suggest that GRPO-DBB attains higher rewards by pruning the breadth of response trajectories while allowing exploration to proceed along longer trajectories, corresponding to depth-wise exploration.
-
-\paragraph{Why does DBB shrink entropy and elongate responses?}
-A decrease in entropy indicates that some token trajectories become less probable and are effectively pruned from the policy's token tree.
-This pruning is particularly pronounced for prompts where all sampled rewards within a group are zero.
-For such prompts, the group-relative advantage of GRPO collapses to zero and yields no training signal.
-In contrast, DBB still produces a non-zero (negative) advantage that rapidly suppresses incorrect trajectories.
-We interpret this stronger pruning of zero-variance prompts as a key mechanism underlying the gains of GRPO-DBB.
-The increase in response length follows naturally.
-To obtain a reward, the model can explore either (i) breadth-wise by diversifying trajectories or (ii) depth-wise by extending them.
-Stronger breadth-wise pruning under DBB shifts exploration toward the depth-wise mode, producing significantly longer responses.
-Importantly, this lower entropy does not compromise sample diversity at evaluation time.
-As shown in Appendix~\ref{ap:best_at_8}, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales, indicating that meaningful exploratory paths are preserved even as exploration is sharpened.
+Examining the response length and entropy over the course of training, we observe that GRPO-DBB consistently produces longer responses than GRPO, while the entropy under GRPO grows rapidly, indicating increasingly unstable exploration behavior.
+We attribute this pattern to how DBB handles zero-variance prompts---those for which all sampled rewards within a group are zero.
+For such prompts, the group-relative advantage of GRPO collapses to zero and yields no training signal, whereas DBB still produces a non-zero (negative) advantage that rapidly suppresses incorrect trajectories.
+This stronger pruning of zero-variance prompts removes unproductive token trajectories from the policy's tree, lowering entropy, and shifts exploration from the breadth-wise mode (diversifying trajectories) toward the depth-wise mode (extending them), naturally yielding the longer responses observed.
+We interpret this mechanism as a key driver of the gains of GRPO-DBB.
+Importantly, the lower entropy does not compromise sample diversity at evaluation time: as shown in Appendix~\ref{ap:best_at_8}, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales, indicating that meaningful exploratory paths are preserved even as exploration is sharpened.
 
 
 \subsection{Ablation Study on $\lambda$}
