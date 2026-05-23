@@ -36,13 +36,11 @@ Importantly, the lower entropy does not compromise sample diversity at evaluatio
 \subsection{Ablation Study on $\lambda$}
 \label{sec:impact_lambda}
 
-To examine the effect of the discount factor $\lambda$ in the DBB estimation, we conduct training experiments of GRPO-DBB with $\lambda = 1.0, 0.75, 0.5,$ and $0.25$ for both model scales.
-
 The hyperparameter $\lambda$ controls the extent to which the estimation of the Bernoulli parameter $p_{\tau}$ for a given query at epoch $\tau$ depends on historical rollout statistics, namely $\alpha_{\tau-1}$ and $\beta_{\tau-1}$.
 When the learning dynamics are fast and the discrepancy between $p_{\tau}$ and $p_{\tau-1}$ is large, a smaller $\lambda$ is generally more effective, as it places greater emphasis on recent observations and reduces estimation bias.
 Conversely, when the learning dynamics are slower and more stationary, a larger $\lambda$ tends to yield better performance by incorporating more historical information and thereby reducing estimation variance.
 
-Table~\ref{tab:lambda} reports the in-distribution Acc@8 of GRPO-DBB across the four $\lambda$ values for both model scales.
+To examine this effect empirically, we train GRPO-DBB with $\lambda = 1.0, 0.75, 0.5,$ and $0.25$ for both model scales and report the in-distribution Acc@8 in Table~\ref{tab:lambda}.
 For Qwen3-8B-Base, $\lambda=0.75$ attains the best average Acc@8 of $51.62$, whereas for Qwen3-1.7B-Base the best is at $\lambda=0.5$ with $29.96$, corresponding to gains of $2.42$ and $3.22$ points over naive GRPO, respectively.
 Every $\lambda$ setting outperforms naive GRPO except $\lambda=1.0$ on Qwen3-1.7B-Base, confirming that incorporating historical reward statistics through DBB is broadly beneficial.
 Notably, the optimal $\lambda$ shifts with model scale, with the smaller model favoring a smaller $\lambda$.
