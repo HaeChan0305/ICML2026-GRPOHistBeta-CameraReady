@@ -124,9 +124,11 @@ The results show that the DBB estimator consistently outperforms the point estim
 This suggests that, in regimes where computational resource constraints necessitate small rollout budgets, the DBB estimator can serve as an effective alternative to point estimation.
 
 \paragraph{Comparison with alternative shrinkage estimators}
-We further benchmark DBB against three alternative shrinkage estimators: per-prompt exponential moving average (EMA), per-prompt Laplace smoothing, and an online empirical-Bayes (EB) variant that shares a Beta prior across prompts.
-Appendix~\ref{ap:ema_laplace} shows that DBB attains the lowest minimum MSE and improves on the point estimator over a broader $\lambda$ range than either EMA or Laplace.
-Appendix~\ref{ap:emp_bayes} further shows that EB, while sidestepping per-prompt $\lambda$ tuning, still attains a higher minimum MSE than DBB; combining the hierarchical prior with the discounted update is a natural direction for future work.
+We further benchmark DBB against three alternative shrinkage estimators: per-prompt exponential moving average (EMA), Laplace smoothing, and an online empirical-Bayes (EB) variant that shares a Beta prior across prompts.
+Appendix~\ref{ap:ema_laplace} shows that DBB attains the lowest minimum MSE and improves on the point estimator over a broader $\lambda$ range than either EMA or Laplace smoothing.
+Appendix~\ref{ap:emp_bayes} further shows that EB, while avoiding $\lambda$ tuning, still attains a higher MSE than the lowest minimum MSE of DBB estimator.
+In other words, since the DBB estimator empirically achieves the lowest MSE, this indicates that it is a superior estimator compared to the three alternatives.
+
 
 \subsection{Evaluation on Alternative Advantage Formulations}
 \label{subsec:drgpo}
