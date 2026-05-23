@@ -419,8 +419,8 @@ Following the same protocol of Section~\ref{sec:mse_analysis}, we sweep $\lambda
 As shown in Figure~\ref{fig:ema_laplace}, the DBB estimator achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
 EMA attains its best MSE of $0.0086$ at $\lambda=0.3$, which is $2.67\%$ higher than that of the DBB estimator; however, the MSE of EMA rises rapidly as $\lambda$ grows, and the range of $\lambda$ over which EMA outperforms the point estimator is relatively narrow.
 Similarly, Laplace smoothing attains its best MSE of $0.0108$ at $\lambda=0.3$, $21.71\%$ higher than that of the DBB estimator, and likewise outperforms the point estimator only within a narrow $\lambda$ range.
-Overall, the DBB estimator is the most favorable option among these light-weight shrinkage estimators.
-It attains the lowest minimum MSE and maintains a broader $\lambda$ range over which it improves on the point estimator.
+Because the DBB estimator not only achieves the lowest minimum MSE, but also maintains performance improvements over the point estimator across a broader range of $\lambda$, it is overall the most favorable option among these light-weight shrinkage estimators.
+
 
 \begin{figure}[!htbp]
     \centering
@@ -431,7 +431,7 @@ It attains the lowest minimum MSE and maintains a broader $\lambda$ range over w
 \FloatBarrier
 
 
-\section{Hierarchical / Empirical-Bayes Prior}
+\section{Comparison with Hierarchical / Empirical-Bayes Prior}
 \label{ap:emp_bayes}
 
 We also consider Empirical Bayes (EB) as a representative approach for introducing a hierarchical / shared prior across prompts.
