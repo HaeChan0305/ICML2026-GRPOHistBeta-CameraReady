@@ -55,5 +55,6 @@ Despite this minimal departure from GRPO, its strong downstream performance sugg
 
 For out-of-distribution evaluation, GRPO-DBB consistently outperforms the baselines across nearly all OOD benchmarks and model scales.
 In particular, it achieves substantial average gains over GRPO of 10.05 and 8.34 points for Qwen3-1.7B-Base and Qwen3-8B-Base, respectively.
-The only non-significant cell is BBH against RePO on the 1.7B model, where the two methods are statistically indistinguishable.
+Compared to the other three baselines (RePO, GRESO, and DAPO), GRPO-DBB still achieves average OOD Acc@8 gains of 1.05--12.53 (8B) and 2.06--6.38 (1.7B) points.
+With only two exceptions---BBH against RePO on the 1.7B model and GPQA-D against GRESO on the 8B model, where GRPO-DBB and the corresponding baseline are statistically indistinguishable---GRPO-DBB is statistically significantly superior to every baseline across all OOD benchmark--model-scale combinations ($p<0.05$).
 These results demonstrate that the DBB estimation provides a strong advantage in improving generalization, which can be attributed to the Bayesian approach's ability to account for uncertainty.
