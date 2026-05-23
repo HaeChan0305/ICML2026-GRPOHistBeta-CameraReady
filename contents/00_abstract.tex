@@ -4,7 +4,7 @@ However, existing group-based RLVR methods often suffer from severe sample ineff
 This inefficiency stems from reliance on point estimation of rewards from a small number of rollouts, leading to high estimation variance, variance collapse, and ineffective utilization of generated responses.
 In this work, we reformulate RLVR from a statistical estimation perspective by modeling rewards as samples drawn from a policy-induced distribution and casting advantage computation as the problem of estimating the reward distribution from finite data.
 Building on this view, we propose \textbf{D}iscounted \textbf{B}eta--\textbf{B}ernoulli (\textbf{DBB}) reward estimation, which leverages historical reward statistics for the non-stationary distribution.
-Although biased, the resulting estimator exhibits reduced and stable variance and theoretically avoids estimated variance collapse.
+Although biased, the resulting estimator exhibits reduced and stable variance and theoretically avoids variance collapse.
 Under mild non-stationarity, it also achieves a lower mean squared error than standard point estimation, as we characterize analytically and verify empirically.
 Across six in-distribution and three out-of-distribution reasoning benchmarks, GRPO with DBB consistently outperforms naive GRPO and strong recent baselines, including the replay-based RePO and the variance-collapse-aware GRESO and DAPO.
 Relative to GRPO, it achieves average Acc@8 improvements of 3.43/2.32 points in-distribution and 10.05/8.34 points out-of-distribution on the 1.7B and 8B models, respectively, without additional computational cost or memory usage.

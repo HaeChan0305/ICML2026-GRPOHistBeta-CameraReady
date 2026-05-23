@@ -176,10 +176,8 @@ and is therefore more prone to high variance, especially in low-sample settings.
 % When reward distribution shifts are moderate relative to the variance of the point estimator, the variance reduction obtained by using historical evidence outweighs the induced bias, yielding a strictly lower MSE.
 % We demonstrate this empirically in Section~\ref{sec:mse_analysis} and provide a detailed derivation for Equations~\eqref{eq:hb_expectation_pseq} and~\eqref{eq:hb_variance_pseq} in Appendix~\ref{app:hb-derivation}.
 
-The bias of the DBB estimator becomes smaller when the underlying reward probabilities evolve gradually, as past values $\{p_k\}_{k<\tau}$ remain close to the current $p_\tau$. 
-In contrast, the variance depends on both the discount factor $\lambda$ and the number of rollouts $N$. 
-On the other hand, the point estimator relies solely on $p_\tau$ and is therefore more susceptible to high variance, particularly in low-sample settings.
-Considering these factors, we empirically evaluate the resulting MSE and present the findings in Section~\ref{sec:mse_analysis}.
+The bias of the DBB estimator becomes smaller when the underlying reward probabilities evolve gradually, as past values $\{p_k\}_{k<\tau}$ remain close to the current $p_\tau$, while its variance is jointly controlled by the discount factor $\lambda$ and the number of rollouts $N$.
+Whether the DBB estimator achieves a lower MSE than the point estimator therefore depends on the relative magnitudes of bias and variance, which we empirically evaluate in Section~\ref{sec:mse_analysis}.
 
 
 % So far, the analysis of the DBB estimator has been conditioned on the historical posterior parameters $(\alpha_{\tau-1}, \beta_{\tau-1})$.

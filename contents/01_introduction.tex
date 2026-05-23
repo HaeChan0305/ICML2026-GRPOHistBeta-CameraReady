@@ -15,7 +15,7 @@ Despite this substantial computational cost, many existing group-based RLVR algo
 This sample inefficiency can be attributed to two fundamental characteristics of RLVR.
 The first characteristic is that the variance of rewards can collapse to zero when all generated responses receive identical rewards under group-relative estimation. 
 This \emph{variance collapse} issue not only wastes the computational cost of response generation but also eliminates meaningful training signals within the batch \cite{zhang2025improving}.
-To address this issue, approaches such as dynamic sampling \cite{yu2025dapoopensourcellmreinforcement} and GRPO with Efficient Selective Rollout (GRESO; \citeauthor{zheng2025actpaysefficientreinforcement}, \citeyear{zheng2025actpaysefficientreinforcement}) have been proposed. However, dynamic sampling requires several times more rollout cost, and GRESO cannot fully resolve the problem since it probabilistically filters prompts that are likely to result in variance collapse.
+To address this issue, approaches such as dynamic sampling \cite{yu2025dapoopensourcellmreinforcement} and GRPO with Efficient Selective Rollout (GRESO; \citeauthor{zheng2025actpaysefficientreinforcement}, \citeyear{zheng2025actpaysefficientreinforcement}) have been proposed. However, dynamic sampling requires several times the rollout budget, and GRESO cannot fully resolve the problem since it probabilistically filters prompts that are likely to result in variance collapse.
 
 The second characteristic is that, due to the on-policy nature of RLVR algorithms, information from all generated responses is discarded after a single gradient update. 
 Recent replay-based methods \cite{li2025reporeplayenhancedpolicyoptimization, zhan2025exgrpolearningreasonexperience} attempt to reuse rollouts generated from the training history.
@@ -32,7 +32,7 @@ To address this limitation, we adopt a statistical perspective that models rewar
 Instead of relying on point estimation, we employ a Bayesian framework \cite{gelman1995bayesian} to model uncertainty explicitly and incorporate temporal reward dynamics.
 Within this framework, we propose the \textbf{D}iscounted \textbf{B}eta--\textbf{B}ernoulli (\textbf{DBB}) reward estimation, which tracks the evolving reward distribution by discounting historical observations. 
 While DBB introduces a small bias, it significantly reduces variance and avoids variance collapse, thereby providing more stable and informative training signals (\cref{fig:intro_figure}). 
-Empirically, DBB yields a lower mean-squared error with respect to the true reward distribution than point estimation in low-sample scenarios, provided that the discount factor $\lambda$ is chosen in a reasonable range.
+Empirically, DBB yields a lower mean squared error with respect to the true reward distribution than point estimation in low-sample scenarios, provided that the discount factor $\lambda$ is chosen in a reasonable range.
 % We further demonstrate empirically that the DBB process achieves a lower mean squared error of its estimator than point estimation when the number of rollouts $N$ is small (Section~\ref{sec:mse_analysis}).
 
 We evaluate GRPO with the DBB reward estimator (GRPO-DBB) on two model scales, Qwen3-1.7B-Base and Qwen3-8B-Base \cite{yang2025qwen3technicalreport}, across six in-distribution mathematical reasoning benchmarks, including MATH500, Minerva, AIME24/25, AMC24, and OlympiadBench.

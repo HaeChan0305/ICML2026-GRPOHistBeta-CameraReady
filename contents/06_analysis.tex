@@ -107,7 +107,7 @@ Since training is conducted for a total of four epochs, this procedure yields a 
 Using $\tilde{p}_{\tau}(q)$ as a surrogate for the true Bernoulli parameter, we measure the average MSE of the DBB estimator and the point estimator following Equations~\eqref{eq:hb_mse_pseq} and~\eqref{eq:pt_mse_pseq}, respectively.
 
 
-\paragraph{Effect of $\lambda$ on MSE}
+\paragraph{Effect of $\lambda$ on MSE.}
 \label{subsec:anal_lambda}
 Since the value of the DBB estimator depends on the discount factor $\lambda$, we empirically analyze how the MSE varies as a function of $\lambda$.
 As shown in Figure~\ref{fig:mse_lambda}(a), the MSE attains its minimum at $\lambda = 0.4$, and for most values of $\lambda$—except for $\lambda = 0.95$ and $\lambda = 1.0$—the DBB estimator yields a lower average MSE than the point estimator.
@@ -117,16 +117,16 @@ As reported in Table~\ref{tab:lambda}, GRPO-DBB achieves the best performance at
 These observations mirror the behavior of the MSE across different values of $\lambda$.
 Taken together, the results indicate that more accurate reward distribution estimation is strongly correlated with improved RLVR performance.
 
-\paragraph{Effect of $N$ on MSE}
+\paragraph{Effect of $N$ on MSE.}
 We further examine how the MSE varies as the number of rollouts $N$ increases.
 Figure~\ref{fig:mse_lambda}(b) reports the average MSE as a function of $N$ when $\lambda = 0.4$.
 The results show that the DBB estimator consistently outperforms the point estimator for $N$ up to 16.
 This suggests that, in regimes where computational resource constraints necessitate small rollout budgets, the DBB estimator can serve as an effective alternative to point estimation.
 
-\paragraph{Comparison with Alternative Shrinkage Estimators}
+\paragraph{Comparison with Alternative Shrinkage Estimators.}
 We further benchmark DBB against three alternative shrinkage estimators: per-prompt exponential moving average (EMA), Laplace smoothing, and an online empirical-Bayes (EB) variant that shares a Beta prior across prompts.
 Appendix~\ref{ap:ema_laplace} shows that DBB attains the lowest minimum MSE and improves on the point estimator over a broader $\lambda$ range than either EMA or Laplace smoothing.
-Appendix~\ref{ap:emp_bayes} further shows that EB, while avoiding $\lambda$ tuning, still attains a higher MSE than the lowest minimum MSE of DBB estimator.
+Appendix~\ref{ap:emp_bayes} further shows that EB, while avoiding $\lambda$ tuning, still attains a higher MSE than the minimum MSE of the DBB estimator.
 In other words, since the DBB estimator empirically achieves the lowest MSE, this indicates that it is a superior estimator compared to the three alternatives.
 
 

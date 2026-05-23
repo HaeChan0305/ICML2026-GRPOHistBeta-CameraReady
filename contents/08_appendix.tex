@@ -180,7 +180,7 @@ where $H_\tau=\lambda^\tau(\alpha_0+\beta_0)+N \sum_{k=1}^{\tau} \lambda^{\tau-k
 \centering
 \small
 \setlength{\tabcolsep}{6pt}
-\caption{Common Training hyperparameter settings for all experiments.}
+\caption{Common training hyperparameter settings for all experiments.}
 \label{tab:hyperparams}
 \begin{tabular}{lcc}
 \toprule
@@ -345,7 +345,7 @@ Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks f
 \resizebox{\linewidth}{!}{
     \begin{tabular}{lccccc>{\columncolor{AvgCol}}c}
     \toprule
-    Method & MATH500 & MinervaMath & AIME24 & AIME25 & AMC24 & Avg. \\
+    Method & MATH500 & Minerva & AIME24 & AIME25 & AMC24 & Avg. \\
     \midrule
     \rowcolor{ModelRow}
     \multicolumn{7}{c}{\textbf{Qwen3-0.6B-Base} trained with \textbf{DAPO-Math-17k}} \\
@@ -361,7 +361,7 @@ Table~\ref{tab:lambda_06B} reports Acc@8 on the six in-distribution benchmarks f
 
 The optimal $\lambda$ for the 0.6B model is $0.25$, smaller than the optimal values $\lambda^\star=0.5$ for 1.7B and $\lambda^\star=0.75$ for 8B.
 Together with our analysis in Section~\ref{sec:impact_lambda}, this supports a simple rule of thumb: \emph{smaller (or weaker) backbones tend to favor smaller $\lambda$.}
-The reason is that their reward distribution shifts more rapidly during training, so the bias of larger $\lambda$ outweighs the variance reduction it provides.
+The reason is that their reward distribution shifts more rapidly during training, so the bias induced by a larger $\lambda$ outweighs the variance reduction it provides.
 We extrapolate this rule cautiously to larger models.
 For $30$B$+$ models trained on datasets of comparable difficulty to DAPO-Math-17k, $\lambda$ close to $1$ is a reasonable starting point.
 Harder datasets (where shifts are larger) are likely to benefit from a smaller $\lambda$.
@@ -375,7 +375,7 @@ A natural question is whether simpler shrinkage estimators could achieve similar
 To address this, we additionally derive and evaluate the per-prompt exponential moving average (EMA) and Laplace smoothing (Lap) estimators of the success probability $p_\tau$.
 For a direct comparison against the DBB estimator on a comparable axis, we parameterize the shrinkage strength of each estimator by a single hyperparameter $\lambda$.
 
-\paragraph{Per-prompt EMA estimator.}
+\paragraph{Per-Prompt EMA Estimator.}
 We define the per-prompt EMA recursively as
 \begin{equation}
 \hat{p}_\tau^{\,\mathrm{EMA}}
@@ -400,7 +400,7 @@ Conditional on $p_{1:\tau}$ and using $S_k\sim\mathrm{Binomial}(N,p_k)$, its con
 \sum_{k=1}^{\tau} w_k^{\,2}\,\frac{p_k(1-p_k)}{N}.
 \end{equation}
 
-\paragraph{Laplace smoothing.}
+\paragraph{Laplace Smoothing.}
 We define the Laplace smoothing as
 \begin{equation}
 \hat{p}_\tau^{\,\mathrm{Lap}}
@@ -414,7 +414,7 @@ whose conditional MSE is
 \frac{\lambda^{2} + (N - 4\lambda^{2})\,p_\tau(1-p_\tau)}{(N+2\lambda)^{2}}.
 \end{equation}
 
-\paragraph{Empirical comparison.}
+\paragraph{Empirical Comparison.}
 Following the same protocol of Section~\ref{sec:mse_analysis}, we sweep $\lambda$ for each estimator.
 As shown in Figure~\ref{fig:ema_laplace}, the DBB estimator achieves the lowest MSE of $0.0083$ at $\lambda=0.4$, outperforming all other methods.
 EMA attains its best MSE of $0.0086$ at $\lambda=0.3$, which is $2.67\%$ higher than that of the DBB estimator; however, the MSE of EMA rises rapidly as $\lambda$ grows, and the range of $\lambda$ over which EMA outperforms the point estimator is relatively narrow.
