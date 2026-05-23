@@ -25,9 +25,10 @@ For GRPO-DBB, the discount factor $\lambda$ is set to $0.5$ for Qwen3-1.7B-Base 
 For both model scales, GRPO-DBB achieves higher validation accuracy and training rewards than GRPO throughout most of the training process.
 
 Examining the response length and entropy over the course of training, we observe that GRPO-DBB consistently produces longer responses than GRPO, while the entropy under GRPO grows rapidly, indicating increasingly unstable exploration behavior.
-We attribute this pattern to how DBB handles zero-variance prompts---those for which all sampled rewards within a group are zero.
-For such prompts, the group-relative advantage of GRPO collapses to zero and yields no training signal, whereas DBB still produces a non-zero (negative) advantage that rapidly suppresses incorrect trajectories.
-This stronger pruning of zero-variance prompts removes unproductive token trajectories from the policy's tree, lowering entropy, and shifts exploration from the breadth-wise mode (diversifying trajectories) toward the depth-wise mode (extending them), naturally yielding the longer responses observed.
+We attribute this pattern to how DBB handles zero-variance prompts.
+For such prompts, the group-relative advantage of GRPO collapses to zero and yields no training signal.
+In contrast, DBB still produces a non-zero advantage: for all-incorrect groups it assigns a negative advantage that suppresses the failed trajectories, while for all-correct groups it assigns a positive advantage that reinforces the successful ones.
+By both suppressing unproductive trajectories and reinforcing successful ones on zero-variance prompts, DBB concentrates probability mass in the policy's token tree, lowering entropy, and shifts exploration from the breadth-wise mode (diversifying trajectories) toward the depth-wise mode (extending them), naturally yielding the longer responses observed.
 We interpret this mechanism as a key driver of the gains of GRPO-DBB.
 Importantly, the lower entropy does not compromise sample diversity at evaluation time: as shown in Appendix~\ref{ap:best_at_8}, GRPO-DBB matches or exceeds GRPO in Best@8 across both model scales, indicating that meaningful exploratory paths are preserved even as exploration is sharpened.
 
