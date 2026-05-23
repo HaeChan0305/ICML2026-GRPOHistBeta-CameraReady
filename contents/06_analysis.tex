@@ -45,14 +45,10 @@ For Qwen3-8B-Base, $\lambda=0.75$ attains the best average Acc@8 of $51.31$, whe
 Every $\lambda$ setting outperforms naive GRPO except $\lambda=1.0$ on Qwen3-1.7B-Base, confirming that incorporating historical reward statistics through DBB is broadly beneficial.
 Notably, the optimal $\lambda$ shifts with model scale, with the smaller model favoring a smaller $\lambda$.
 
-This behavior can be interpreted in conjunction with the training reward dynamics shown in Figure~\ref{fig:train_dynamics}.
-For Qwen3-1.7B-Base, the training reward exhibits sustained changes throughout the training process, indicating continuously evolving estimates of $p_{\tau}$.
-In contrast, for Qwen3-8B-Base, the training reward increases rapidly during the very early stage of training (within approximately the first 0.3 epoch) and remains relatively stationary for the remainder of training.
-As a result, a smaller discount factor ($\lambda = 0.5$) is more effective for Qwen3-1.7B-Base, while a larger value ($\lambda = 0.75$) better matches the slower and more gradual learning dynamics of Qwen3-8B-Base.
-More generally, this behavior reflects the bias--variance trade-off of the DBB estimator.
-As $\lambda$ increases, variance decreases but bias grows when the reward distribution shifts substantially between epochs.
-Weaker models or more challenging datasets tend to incur larger such shifts, making a smaller $\lambda$ preferable.
-Conversely, once the model fits the training distribution well, the reward distribution becomes nearly stationary and bounded, so a larger $\lambda$ further reduces MSE.
+This scale dependence aligns with the training reward dynamics shown in Figure~\ref{fig:train_dynamics}.
+For Qwen3-1.7B-Base, the training reward exhibits sustained changes throughout training, indicating continuously evolving estimates of $p_{\tau}$; in contrast, for Qwen3-8B-Base, the training reward rises rapidly within approximately the first 0.3 epoch and remains relatively stationary thereafter.
+The faster-evolving dynamics on the smaller model thus favor a smaller $\lambda$ to reduce bias, while the more stationary dynamics on the larger model favor a larger $\lambda$ to reduce variance, consistent with the bias--variance trade-off above.
+More broadly, weaker models or more challenging datasets tend to incur larger between-epoch shifts in the reward distribution and therefore benefit from a smaller $\lambda$, whereas once the model fits the training distribution well, the reward distribution becomes nearly stationary and bounded, allowing a larger $\lambda$ to further reduce MSE.
 To corroborate this trend, we additionally conduct a $\lambda$ search on Qwen3-0.6B-Base in Appendix~\ref{ap:lambda_06B}.
 There, $\lambda=0.25$ attains the best performance, consistent with the rule of thumb that \emph{smaller models tend to favor smaller $\lambda$}.
 Based on this observation, we cautiously suggest a starting point for larger models.
